@@ -95,6 +95,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/marketing/marketing.page').then((m) => m.MarketingPage),
       },
       {
+        path: 'reports',
+        canActivate: [permissionGuard],
+        data: { permissions: ['reports.view', 'reports.financial'], module: 'reports' },
+        loadComponent: () => import('./features/reports/reports.page').then((m) => m.ReportsPage),
+      },
+      {
         path: 'finance',
         canActivate: [permissionGuard],
         data: { permissions: ['finance.view', 'finance.manage', 'expenses.approve', 'commissions.view', 'commissions.own', 'reports.financial'], module: 'finance' },

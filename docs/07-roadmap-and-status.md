@@ -9,7 +9,7 @@
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | 🟡 **Parts 1–2 delivered** (POS, invoices, payments, cash drawer, credit notes, print; packages, memberships, gift vouchers, store credit, deposits). Remaining: server PDF, payment gateway |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | ✅ **Delivered** (part 1: inventory, purchasing, retail, consumables · part 2: commissions, expenses & petty cash, P&L, loyalty) |
 | 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | ✅ **Delivered** |
-| 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | 🟡 **Part 1 delivered** (super-admin console, subscription invoices, plan changes, renewals and dunning, platform analytics). Part 2: advanced reports and exports; gateway webhook once a provider is chosen |
+| 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | ✅ **Delivered** (part 1: super-admin console, subscription invoices, plan changes, renewals and dunning, platform analytics · part 2: reports and exports). Gateway webhook follows once a provider is chosen |
 | 7. Production hardening | Security review and pen test, load tests, backup-restore drills, VAT/Fawtara and PDPL review, monitoring, go-live checklist | |
 
 ---
@@ -156,6 +156,12 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Angular**: `/admin` console (overview, businesses, business detail, invoices, plans, settings & admins), Settings → Plan & billing, printable subscription invoice, overdue banner, admin link in the user menu. English is now lazy-loaded like Arabic (initial bundle 798 kB).
 * **Tests**: `npm run test:db` **158 / 158** (5 new); `ng test` **46 / 46**.
 
+## Phase 6, part 2 report: reports & exports (2026-11-09)
+
+* **Migration `0018_reports`**: `run_report` with nine reports (daily sales, VAT summary, invoice register, payments, services, staff performance, retail products, appointments, top customers), permission- and branch-scoped, credit notes subtracted; audited exports.
+* **Angular**: `/reports` (replaces the coming-soon page) with presets, branch filter, totals, Excel-friendly CSV export and print.
+* **Tests**: `npm run test:db` **164 / 164** (6 new); `ng test` **49 / 49** (CSV writer).
+
 ### Next milestone
 
-Phase 6, part 2: advanced reports and exports (sales, services, staff, customers, VAT; CSV/Excel). Payment gateway webhook once the provider is chosen. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.
+Phase 7: production hardening (security review, load tests, backup-restore drill, VAT/Fawtara and PDPL review, monitoring, go-live checklist). Payment gateway webhook once the provider is chosen. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.

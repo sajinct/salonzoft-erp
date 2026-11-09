@@ -8,7 +8,7 @@ import {
   LucideShieldCheck, LucideSparkles, LucideStore, LucideSun, LucideTrash2, LucideTruck, LucideUpload,
   LucideUserRound, LucideUsers, LucideWallet, LucideX, provideLucideConfig, provideLucideIcons,
   LucideClipboardList, LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
-  LucideCreditCard,
+  LucideCreditCard, LucideDownload,
 } from '@lucide/angular';
 import { routes } from './app.routes';
 import { I18nService } from './core/i18n/i18n.service';
@@ -28,7 +28,7 @@ export const appConfig: ApplicationConfig = {
       LucideShieldCheck, LucideSparkles, LucideStore, LucideSun, LucideTrash2, LucideTruck, LucideUpload,
       LucideUserRound, LucideUsers, LucideWallet, LucideX,
       LucideClipboardList, LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
-      LucideCreditCard,
+      LucideCreditCard, LucideDownload,
     ),
   ],
 };

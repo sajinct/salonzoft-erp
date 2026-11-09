@@ -4692,6 +4692,17 @@ export type Database = {
           branch_ids: string[]
         }[]
       }
+      log_report_export: {
+        Args: {
+          p_tenant: string
+          p_report: string
+          p_from: string
+          p_to: string
+          p_branch: string
+          p_rows: number
+        }
+        Returns: undefined
+      }
       lookup_voucher: {
         Args: {
           p_tenant: string
@@ -4871,6 +4882,16 @@ export type Database = {
           p_invitation_id: string
         }
         Returns: undefined
+      }
+      run_report: {
+        Args: {
+          p_tenant: string
+          p_report: string
+          p_from: string
+          p_to: string
+          p_branch?: string
+        }
+        Returns: Json
       }
       save_branch_special_period: {
         Args: {

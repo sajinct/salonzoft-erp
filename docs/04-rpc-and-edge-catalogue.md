@@ -72,6 +72,13 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 
 ## Edge Functions
 
+### Reports (Phase 6, migration 0018)
+
+| RPC | Kind | Permission | Notes |
+|---|---|---|---|
+| `run_report(tenant, report, from, to, branch?)` | DEFINER, read-only | per report (see 03) + `reports` module | `sales_daily`, `vat`, `invoices`, `payments`, `services`, `staff`, `products`, `appointments`, `customers`. Calendar days in the salon timezone, max 366 days (`INVALID_RANGE`), credit notes subtracted, at most 10,000 rows (`truncated`) |
+| `log_report_export(tenant, report, from, to, branch, rows)` | DEFINER | same as the report | Audit entry `report.exported` |
+
 ### SaaS billing & super-admin (Phase 6, migration 0017)
 
 | RPC | Kind | Who | Notes |
