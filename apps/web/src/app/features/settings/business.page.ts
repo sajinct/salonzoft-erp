@@ -123,6 +123,12 @@ const DAYS = [0, 1, 2, 3, 4, 5, 6];
           <p class="hint">{{ 'business.vatRateHint' | t }}</p>
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" formControlName="prices_include_vat" />{{ 'business.pricesIncludeVat' | t }}</label>
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" formControlName="allow_negative_stock" />{{ 'business.allowNegativeStock' | t }}</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" formControlName="loyalty_enabled" />{{ 'business.loyaltyEnabled' | t }}</label>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div class="field"><label class="label" for="lppu">{{ 'business.loyaltyPointsPerUnit' | t }}</label><input id="lppu" class="input num" type="number" min="0" step="0.5" dir="ltr" formControlName="loyalty_points_per_unit" /></div>
+            <div class="field"><label class="label" for="lpv">{{ 'business.loyaltyPointValue' | t }}</label><input id="lpv" class="input num" type="number" min="0" step="0.001" dir="ltr" formControlName="loyalty_point_value" /></div>
+            <div class="field"><label class="label" for="lmin">{{ 'business.loyaltyMinRedeem' | t }}</label><input id="lmin" class="input num" type="number" min="0" dir="ltr" formControlName="loyalty_min_redeem" /></div>
+          </div>
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="field"><label class="label" for="fen">{{ 'business.footerEn' | t }}</label><textarea id="fen" rows="2" class="input" formControlName="receipt_footer_en"></textarea></div>
             <div class="field"><label class="label" for="far">{{ 'business.footerAr' | t }}</label><textarea id="far" rows="2" class="input" formControlName="receipt_footer_ar" dir="rtl" lang="ar"></textarea></div>
@@ -174,6 +180,10 @@ export class BusinessPage implements OnInit {
       default_vat_rate: [5, [Validators.required, Validators.min(0), Validators.max(100)]],
       prices_include_vat: [true],
       allow_negative_stock: [false],
+      loyalty_enabled: [false],
+      loyalty_points_per_unit: [1],
+      loyalty_point_value: [0.01],
+      loyalty_min_redeem: [100],
       invoice_prefix: ['INV', [Validators.required, Validators.pattern(/^[A-Z0-9-]{1,10}$/)]],
       receipt_footer_en: [''],
       receipt_footer_ar: [''],
@@ -204,6 +214,10 @@ export class BusinessPage implements OnInit {
           default_vat_rate: Number(settings.default_vat_rate),
           prices_include_vat: settings.prices_include_vat,
           allow_negative_stock: settings.allow_negative_stock,
+          loyalty_enabled: settings.loyalty_enabled,
+          loyalty_points_per_unit: settings.loyalty_points_per_unit,
+          loyalty_point_value: settings.loyalty_point_value,
+          loyalty_min_redeem: settings.loyalty_min_redeem,
           invoice_prefix: settings.invoice_prefix,
           receipt_footer_en: settings.receipt_footer_en ?? '',
           receipt_footer_ar: settings.receipt_footer_ar ?? '',

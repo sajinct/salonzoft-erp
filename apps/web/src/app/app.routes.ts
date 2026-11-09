@@ -71,6 +71,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/pos/invoice.page').then((m) => m.InvoicePage),
       },
       {
+        path: 'finance',
+        canActivate: [permissionGuard],
+        data: { permissions: ['finance.view', 'finance.manage', 'expenses.approve', 'commissions.view', 'commissions.own', 'reports.financial'], module: 'finance' },
+        loadComponent: () => import('./features/finance/finance.page').then((m) => m.FinancePage),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard],
         data: { permissions: ['inventory.view', 'inventory.manage'], module: 'inventory' },

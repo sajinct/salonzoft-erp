@@ -62,8 +62,9 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 | `adjust_stock(branch, items, note?)` · `transfer_stock(from, to, items, note?)` | DEFINER | 4 | ✅ | Counts / opening stock (`inventory.manage`); transfers at source average cost, both branches must be accessible |
 | `save_purchase_order`, `submit_purchase_order` (gap-free `PO-…`), `cancel_purchase_order`, `receive_purchase_order(order, lines, ref?, note?, key?)` | DEFINER | 4 | ✅ | `purchases.manage`; partial receipts, no over-receipt, weighted average cost, idempotent |
 | `set_service_product_usage(service, items)` · `get_stock(branch)` | DEFINER | 4 | ✅ | Consumables per service (deducted at checkout, never blocking) · stock with value and low-stock flag |
-| `calculate_commission(period)` | DEFINER | 4 | ⏳ | From immutable invoice lines |
-| `award_loyalty_points`, `redeem_loyalty_points` | DEFINER | 4 | ⏳ | |
+| Commission entries (posting trigger) · `get_commission_report(tenant, from, to, branch?)` · `pay_commissions(tenant, employee, up_to, method, ref?, note?)` | DEFINER | 4 | ✅ | From posted invoice lines (net of VAT and discounts), claw-back on credit notes; report: all for `commissions.view`/`finance.view`, own for `commissions.own`; payouts need `finance.manage` |
+| `record_expense(branch, category, date, amount, vat, description, method, from_drawer?, supplier?, ref?)` · `review_expense(expense, approve, reason?)` · `get_finance_summary(tenant, from, to, branch?)` | DEFINER | 4 | ✅ | Approval flow, petty cash from the drawer, P&L (revenue − COGS − products used − commission − expenses) |
+| Loyalty earn / reverse (posting trigger) · `redeem_loyalty_points(customer, points)` · `adjust_loyalty_points(customer, points, note)` | DEFINER | 4 | ✅ | Points per OMR of net spend (vouchers excluded); redeemed into store credit with a guarded decrement; manual adjustments need `loyalty.manage` |
 | `get_sales_report(tenant, from, to, branch?)` and other reports | INVOKER | 4–6 | ⏳ | Permission-gated |
 | Booking portal: `public_get_salon(slug)`, `public_availability(…)`, `public_create_booking(…)` | DEFINER (anon) | 5 | ⏳ | Minimal fields, rate-limited via Edge Function + captcha |
 

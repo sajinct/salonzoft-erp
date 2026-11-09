@@ -58,6 +58,7 @@ export interface Wallet {
   }[];
   membership: { name_en: string; name_ar: string | null; discount_percent: number; ends_at: string } | null;
   vouchers: WalletVoucher[];
+  loyalty: { points: number; point_value: number; min_redeem: number } | null;
 }
 
 export interface SalesSummary {

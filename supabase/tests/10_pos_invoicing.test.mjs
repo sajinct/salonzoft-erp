@@ -127,7 +127,7 @@ test('split payments, cash sessions and overpayment', async () => {
   await expectPgError(db.query(`update public.payments set amount = 1`), 'PAYMENT_IMMUTABLE');
 
   const [{ r }] = await q(db, cashier.userId, `select public.close_cash_session($1, 33.5, 'short by 0.5') r`, [s]);
-  assert.deepEqual(r, { expected_cash: 34, counted_cash: 33.5, variance: -0.5 });
+  assert.deepEqual(r, { expected_cash: 34, counted_cash: 33.5, variance: -0.5, petty_cash: 0 });
   await expectPgError(q(db, cashier.userId, `select public.close_cash_session($1, 1)`, [s]), 'CASH_SESSION_CLOSED');
   await expectPgError(q(db, stylist.userId, `select public.open_cash_session($1, 0)`, [A.branchId]), 'FORBIDDEN');
 });

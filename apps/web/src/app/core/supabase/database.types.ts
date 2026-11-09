@@ -497,6 +497,221 @@ export type Database = {
           }
         ]
       }
+      commission_entries: {
+        Row: {
+          amount: number
+          base_amount: number
+          branch_id: string
+          created_at: string
+          earned_on: string
+          employee_id: string
+          id: string
+          invoice_id: string
+          invoice_item_id: string
+          payout_id: string | null
+          rate_percent: number
+          rule_id: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          branch_id: string
+          created_at?: string
+          earned_on: string
+          employee_id: string
+          id?: string
+          invoice_id: string
+          invoice_item_id: string
+          payout_id?: string | null
+          rate_percent: number
+          rule_id?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          branch_id?: string
+          created_at?: string
+          earned_on?: string
+          employee_id?: string
+          id?: string
+          invoice_id?: string
+          invoice_item_id?: string
+          payout_id?: string | null
+          rate_percent?: number
+          rule_id?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_entries_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_entries_employee_id_tenant_id_fkey"
+            columns: ["employee_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_entries_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_entries_payout_id_tenant_id_fkey"
+            columns: ["payout_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "commission_payouts"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_entries_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      commission_payouts: {
+        Row: {
+          employee_id: string
+          id: string
+          method: string
+          note: string | null
+          paid_at: string
+          paid_by: string | null
+          period_to: string
+          reference: string | null
+          tenant_id: string
+          total_amount: number
+        }
+        Insert: {
+          employee_id: string
+          id?: string
+          method: string
+          note?: string | null
+          paid_at?: string
+          paid_by?: string | null
+          period_to: string
+          reference?: string | null
+          tenant_id: string
+          total_amount: number
+        }
+        Update: {
+          employee_id?: string
+          id?: string
+          method?: string
+          note?: string | null
+          paid_at?: string
+          paid_by?: string | null
+          period_to?: string
+          reference?: string | null
+          tenant_id?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payouts_employee_id_tenant_id_fkey"
+            columns: ["employee_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      commission_rules: {
+        Row: {
+          created_at: string
+          employee_id: string | null
+          fixed_amount: number
+          id: string
+          is_active: boolean
+          item_kind: string
+          product_id: string | null
+          rate_percent: number
+          service_category_id: string | null
+          service_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: string | null
+          fixed_amount?: number
+          id?: string
+          is_active?: boolean
+          item_kind?: string
+          product_id?: string | null
+          rate_percent?: number
+          service_category_id?: string | null
+          service_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string | null
+          fixed_amount?: number
+          id?: string
+          is_active?: boolean
+          item_kind?: string
+          product_id?: string | null
+          rate_percent?: number
+          service_category_id?: string | null
+          service_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_employee_id_tenant_id_fkey"
+            columns: ["employee_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_rules_product_id_tenant_id_fkey"
+            columns: ["product_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_rules_service_category_id_tenant_id_fkey"
+            columns: ["service_category_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_rules_service_id_tenant_id_fkey"
+            columns: ["service_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "commission_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       customer_consents: {
         Row: {
           channel: string
@@ -989,6 +1204,139 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          }
+        ]
+      }
+      expense_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name_ar: string | null
+          name_en: string
+          sort_order: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_ar?: string | null
+          name_en: string
+          sort_order?: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_ar?: string | null
+          name_en?: string
+          sort_order?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          cash_session_id: string | null
+          category_id: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          payment_method: string
+          recorded_by: string | null
+          reference: string | null
+          rejection_reason: string | null
+          status: string
+          supplier_id: string | null
+          tenant_id: string
+          updated_at: string
+          vat_amount: number
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          cash_session_id?: string | null
+          category_id: string
+          created_at?: string
+          description: string
+          expense_date: string
+          id?: string
+          payment_method: string
+          recorded_by?: string | null
+          reference?: string | null
+          rejection_reason?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          vat_amount?: number
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          cash_session_id?: string | null
+          category_id?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          payment_method?: string
+          recorded_by?: string | null
+          reference?: string | null
+          rejection_reason?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "expenses_cash_session_id_tenant_id_fkey"
+            columns: ["cash_session_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "cash_sessions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "expenses_category_id_tenant_id_fkey"
+            columns: ["category_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "expenses_supplier_id_tenant_id_fkey"
+            columns: ["supplier_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "tenant_id"]
           }
         ]
       }
@@ -1502,6 +1850,85 @@ export type Database = {
             columns: ["original_invoice_id", "tenant_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      loyalty_accounts: {
+        Row: {
+          balance: number
+          customer_id: string
+          lifetime_earned: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          customer_id: string
+          lifetime_earned?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          customer_id?: string
+          lifetime_earned?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_accounts_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      loyalty_transactions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          invoice_id: string | null
+          kind: string
+          note: string | null
+          points: number
+          tenant_id: string
+          voucher_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          invoice_id?: string | null
+          kind: string
+          note?: string | null
+          points: number
+          tenant_id: string
+          voucher_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          note?: string | null
+          points?: number
+          tenant_id?: string
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id", "tenant_id"]
           }
         ]
@@ -2923,6 +3350,10 @@ export type Database = {
           default_vat_rate: number
           invoice_prefix: string
           logo_path: string | null
+          loyalty_enabled: boolean
+          loyalty_min_redeem: number
+          loyalty_point_value: number
+          loyalty_points_per_unit: number
           phone_country_code: string
           prices_include_vat: boolean
           receipt_footer_ar: string | null
@@ -2944,6 +3375,10 @@ export type Database = {
           default_vat_rate?: number
           invoice_prefix?: string
           logo_path?: string | null
+          loyalty_enabled?: boolean
+          loyalty_min_redeem?: number
+          loyalty_point_value?: number
+          loyalty_points_per_unit?: number
           phone_country_code?: string
           prices_include_vat?: boolean
           receipt_footer_ar?: string | null
@@ -2965,6 +3400,10 @@ export type Database = {
           default_vat_rate?: number
           invoice_prefix?: string
           logo_path?: string | null
+          loyalty_enabled?: boolean
+          loyalty_min_redeem?: number
+          loyalty_point_value?: number
+          loyalty_points_per_unit?: number
           phone_country_code?: string
           prices_include_vat?: boolean
           receipt_footer_ar?: string | null
@@ -3252,6 +3691,14 @@ export type Database = {
         }
         Returns: Json
       }
+      adjust_loyalty_points: {
+        Args: {
+          p_customer_id: string
+          p_points: number
+          p_note: string
+        }
+        Returns: number
+      }
       adjust_stock: {
         Args: {
           p_branch_id: string
@@ -3383,6 +3830,23 @@ export type Database = {
         }
         Returns: Json
       }
+      get_commission_report: {
+        Args: {
+          p_tenant: string
+          p_from: string
+          p_to: string
+          p_branch_id?: string
+        }
+        Returns: {
+          employee_id: string
+          name_en: string
+          name_ar: string
+          sales_base: number
+          commission: number
+          unpaid: number
+          lines: number
+        }[]
+      }
       get_customer_wallet: {
         Args: {
           p_customer_id: string
@@ -3392,6 +3856,15 @@ export type Database = {
       get_dashboard_summary: {
         Args: {
           p_tenant: string
+          p_branch_id?: string
+        }
+        Returns: Json
+      }
+      get_finance_summary: {
+        Args: {
+          p_tenant: string
+          p_from: string
+          p_to: string
           p_branch_id?: string
         }
         Returns: Json
@@ -3498,6 +3971,17 @@ export type Database = {
         }
         Returns: string
       }
+      pay_commissions: {
+        Args: {
+          p_tenant: string
+          p_employee_id: string
+          p_up_to: string
+          p_method: string
+          p_reference?: string
+          p_note?: string
+        }
+        Returns: Json
+      }
       receive_purchase_order: {
         Args: {
           p_order_id: string
@@ -3505,6 +3989,21 @@ export type Database = {
           p_supplier_reference?: string
           p_note?: string
           p_idempotency_key?: string
+        }
+        Returns: Json
+      }
+      record_expense: {
+        Args: {
+          p_branch_id: string
+          p_category_id: string
+          p_date: string
+          p_amount: number
+          p_vat_amount: number
+          p_description: string
+          p_method: string
+          p_from_drawer?: boolean
+          p_supplier_id?: string
+          p_reference?: string
         }
         Returns: Json
       }
@@ -3518,6 +4017,13 @@ export type Database = {
         }
         Returns: Json
       }
+      redeem_loyalty_points: {
+        Args: {
+          p_customer_id: string
+          p_points: number
+        }
+        Returns: Json
+      }
       reschedule_appointment: {
         Args: {
           p_appointment_id: string
@@ -3525,6 +4031,14 @@ export type Database = {
           p_employee_id?: string
         }
         Returns: Json
+      }
+      review_expense: {
+        Args: {
+          p_expense_id: string
+          p_approve: boolean
+          p_reason?: string
+        }
+        Returns: undefined
       }
       revoke_invitation: {
         Args: {

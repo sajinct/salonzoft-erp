@@ -9,6 +9,7 @@ import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
 import { Customer, CustomersService } from '../customers/data/customers.service';
 import { Employee, EmployeesService } from '../employees/data/employees.service';
+import { FinanceService } from '../finance/data/finance.service';
 import { InventoryService, StockRow } from '../inventory/data/inventory.service';
 import { Membership, Package, PackagesService } from '../packages/data/packages.service';
 import { Service, ServiceCategory, ServicesService } from '../services/data/services.service';
@@ -173,6 +174,14 @@ const blankLine = (patch: Partial<UiLine> & Pick<UiLine, 'kind' | 'description'>
                     }
                   }
                 }
+                @if (w.loyalty; as l) {
+                  <div class="flex items-center gap-2">
+                    <span class="flex-1">{{ 'pos.loyaltyPoints' | t: { n: l.points } }}</span>
+                    @if (l.points >= l.min_redeem && l.points > 0) {
+                      <button type="button" class="btn-ghost btn-sm h-6" (click)="redeemPoints(l.points)">{{ 'pos.redeemPoints' | t: { amount: (l.points * l.point_value | money) } }}</button>
+                    }
+                  </div>
+                }
                 @if (walletCredit() > 0) {
                   <p class="text-success">{{ 'pos.creditAvailable' | t: { amount: (walletCredit() | money) } }}</p>
                 }
@@ -256,6 +265,7 @@ export class PosPage implements OnInit {
   private readonly servicesApi = inject(ServicesService);
   private readonly packagesApi = inject(PackagesService);
   private readonly inventoryApi = inject(InventoryService);
+  private readonly financeApi = inject(FinanceService);
   private readonly employeesApi = inject(EmployeesService);
   private readonly customersApi = inject(CustomersService);
   private readonly dialog = inject(Dialog);
@@ -453,6 +463,19 @@ export class PosPage implements OnInit {
   /** Pay a service with a session from one of the customer's packages. */
   protected redeem(customerPackageId: string, serviceId: string, nameEn: string, nameAr: string | null): void {
     this.push(blankLine({ kind: 'service', service_id: serviceId, customer_package_id: customerPackageId, description: this.i18n.pick(nameEn, nameAr), priceType: 'fixed' }));
+  }
+
+  /** Turn all points into store credit; it is then offered at payment. */
+  protected async redeemPoints(points: number): Promise<void> {
+    const c = this.customer();
+    if (!c) return;
+    try {
+      const res = await this.financeApi.redeemPoints(c.id, points);
+      this.toast.success(this.i18n.t('pos.pointsRedeemed', { code: res.code }));
+      await this.loadWallet();
+    } catch (err) {
+      this.toast.error(err);
+    }
   }
 
   protected addVoucher(depositFor: string | null): void {

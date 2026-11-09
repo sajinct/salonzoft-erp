@@ -69,13 +69,14 @@ import {
           </section>
 
           @if (wallet(); as w) {
-            @if (w.membership || w.packages.length || w.vouchers.length) {
+            @if (w.membership || w.packages.length || w.vouchers.length || w.loyalty) {
               <section class="card p-5">
                 <h2 class="mb-3 font-semibold">{{ 'customers.wallet' | t }}</h2>
                 <div class="space-y-2 text-sm">
                   @if (w.membership; as m) {
                     <p><span class="badge-primary">{{ i18n.pick(m.name_en, m.name_ar) }} · −{{ m.discount_percent }}%</span> <span class="text-muted">{{ 'customers.until' | t }} {{ m.ends_at | localDate }}</span></p>
                   }
+                  @if (w.loyalty; as l) { <p class="flex justify-between"><span>{{ 'customers.loyaltyPoints' | t }}</span><strong class="num">{{ l.points }}</strong></p> }
                   @for (p of w.packages; track p.id) {
                     <div class="rounded-xl bg-surface-2 p-3">
                       <p class="font-medium">{{ i18n.pick(p.name_en, p.name_ar) }}@if (p.expires_at) { <span class="text-xs text-muted"> · {{ 'customers.until' | t }} {{ p.expires_at | localDate }}</span> }</p>
