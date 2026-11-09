@@ -6,6 +6,8 @@ Schemas: `public` (exposed: tables + RPCs), `app` (private helpers, not exposed 
 
 ## Phase 1: implemented (migrations 0001–0007)
 
+Phase 2 part 1 (migrations 0008–0009: services, staff, customers) is listed under [Migration list](#migration-list).
+
 ```mermaid
 erDiagram
   auth_users ||--|| profiles : "1:1"
@@ -156,3 +158,12 @@ erDiagram
 | `20261109000005_triggers.sql` | Audit triggers, immutable audit log, plan limits, single main branch, seat capacity |
 | `20261109000006_rpc_tenancy.sql` | Phase 1 RPCs |
 | `20261109000007_storage.sql` | `tenant-assets` bucket + path-based policies |
+| `20261109000008_services_staff.sql` | Service catalogue, branch prices, resources, employees, branch/skill assignments, weekly shifts (overlap trigger), leave, special periods (holidays / Ramadan hours), employee plan limit, 4 RPCs |
+| `20261109000009_customers.sql` | `pg_trgm`, E.164 mobile normalisation, customers (unique mobile per tenant, trigram search), append-only consents, sensitive-aware notes, search / duplicate / import RPCs |
+
+### Phase 2 part 1 notes
+
+* `staff_shifts` references `employee_branches (employee_id, branch_id)`, so a shift can only exist where the employee works, and removing the assignment removes its shifts.
+* Overlaps that a CHECK can't express (shifts of one employee, special periods of one branch) are enforced by row-locking triggers, so direct table writes and RPCs follow the same rules.
+* `employees.membership_id` uses `ON DELETE SET NULL (membership_id)` (PG15+), so removing a login keeps the employee and its history.
+* `customers.search_text` is a stored generated column with a GIN trigram index. Phone searches use the digits only.

@@ -5,7 +5,7 @@
 | Phase | Scope | Status |
 |---|---|---|
 | **1. SaaS foundation** | Angular app, Supabase integration, migrations, auth, tenants, memberships, roles and permissions, RLS, branches, bilingual layout, entitlement foundation, first dashboard | ✅ **Milestone 1 delivered** (see below) |
-| 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | Next |
+| 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | 🟡 **Part 1 delivered** (services, staff, customers); part 2 (appointments) next |
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | |
 | 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | |
@@ -59,9 +59,42 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 7. Ownership transfer, tenant closure/export, and the privacy-request workflows are not built yet (Phase 6/7).
 8. Plan prices (15/35/75 OMR) are placeholders.
 
-### Next milestone: Phase 2, part 1 (services, staff, customers)
+---
 
-* Migration `0008_services_staff`: `service_categories`, `services` (bilingual, duration, buffers, VAT category), `service_prices` (branch overrides), `resources`, `employees` (linked optionally to memberships), `employee_services`, `staff_shifts` (split), `staff_leaves`, `branch_holidays`, Ramadan schedule overrides
-* Migration `0009_customers`: `customers` (normalised +968 mobile, unique per tenant, trigram search), `customer_consents`, `customer_notes`, duplicate detection RPC, CSV import RPC with tenant validation
-* Angular: services catalogue, employee profiles and roster, customer list/profile/search
-* Then Phase 2, part 2: `appointments` with btree_gist exclusion constraints, `calculate_availability`, `create_appointment` with locking and idempotency, calendar UI, realtime channels, and **real-Postgres concurrency tests**
+## Phase 2, part 1 report: services, staff, customers (2026-11-09)
+
+### Implemented
+
+* **Migration `0008_services_staff`**:
+  * Tables: `service_categories`, `services` (bilingual; duration and prep/clean-up buffers; fixed, "from" or till pricing; VAT category; audience; online-bookable flag), `service_prices` (per-branch price or "not offered"), `resources` (rooms, chairs, beds), `employees` (optional link to a login, which grants no access by itself), `employee_branches`, `employee_services`, `staff_shifts` (weekly, split, at most one place at a time), `staff_leaves`, `branch_special_periods` + `branch_special_hours` (holidays, closures, Ramadan/Eid hours).
+  * Active employees count against the plan's `max_staff`.
+  * RPCs: `set_service_branch_prices`, `set_employee_assignments`, `set_employee_shifts`, `save_branch_special_period`.
+* **Migration `0009_customers`**:
+  * `customers`: mobile normalised to E.164 (+968 default), unique per tenant; trigram search (`pg_trgm`) over English and Arabic names, mobile and email; status active, blocked or archived (no hard delete).
+  * `customer_consents`: append-only history per channel and purpose.
+  * `customer_notes`: allergy and medical notes require `customers.sensitive`, and the audit log never stores note text.
+  * RPCs: `search_customers`, `find_customer_duplicates`, `import_customers` (dry run, a savepoint per row, duplicate and error report, max 2000 rows).
+* **Angular**:
+  * `/services`: category filter, search, service dialog with branch prices.
+  * `/employees`: profile, branches and skills, weekly split shifts, leave.
+  * `/customers`: debounced search, duplicate warning on create, CSV import with check-then-import.
+  * `/customers/:id`: details, consent matrix with history, pinned and sensitive notes.
+  * All screens in English and Arabic (RTL).
+
+### Tests
+
+| Suite | Result |
+|---|---|
+| `npm run test:db` (PGlite, real migrations) | **80 / 80** (57 Phase 1 + 23 new in `07_services_staff`, `08_customers`) |
+| `ng test` | **39 / 39** (6 new CSV parser tests) |
+| `ng build --configuration production` | passing, initial 823 kB raw / 169 kB transfer |
+
+### Not in this part (deliberately)
+
+* UI for resources and branch holidays/special hours: the tables, RPCs and tests are in place, and the screens arrive with the calendar, where they're used.
+* Availability engine, appointments, calendar, realtime and concurrency tests: Phase 2 part 2.
+* Customer erasure/export (PDPL): Phase 6/7, through an audited privacy workflow.
+
+### Next milestone: Phase 2, part 2 (appointments)
+
+`appointments` with btree_gist exclusion constraints, `calculate_availability` (shifts − leave − special periods − bookings − buffers − branch hours), `create_appointment` with locking and idempotency, calendar UI, realtime channels, and **real-Postgres concurrency tests**.

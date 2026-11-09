@@ -94,10 +94,27 @@ Tokens carry 244 bits of CSPRNG randomness and are returned once. Only the SHA-2
 | reports.financial | ✓ | | | | ✓ |
 | online_booking.manage | ✓ | | | | |
 
-## Tested security scenarios (executed: `npm run test:db`, 57 passing)
+## Phase 2 part 1: who can read and write what
+
+| Data | Read | Write |
+|---|---|---|
+| Services, categories, branch prices | `services.*`, `appointments.*` (incl. `.own`), `pos.access`, `online_booking.manage` | `services.manage` (branch prices: only accessible branches) |
+| Resources | Same as services, limited to accessible branches | `services.manage` + branch access |
+| Employees, branches, skills, shifts | `employees.*`, `attendance.manage`, `appointments.view/manage`, `pos.access`, plus each employee's **own** record | `employees.manage` (branch links and shifts: only accessible branches) |
+| Leave | Employee readers (minus POS) and own record | `attendance.manage` |
+| Holidays / special hours | Members of that branch, or `branches.manage` | `branches.manage` |
+| Customers, consents | `customers.view` | `customers.manage`. Consents are insert-only; customers are never deleted (archive) |
+| Allergy / medical notes | `customers.view` **and** `customers.sensitive` | `customers.manage` **and** `customers.sensitive`. Note text is stripped from audit entries |
+
+A branch the caller can't see is reported as `INVALID_BRANCH`, never as "exists but forbidden".
+
+## Tested security scenarios (executed: `npm run test:db`, 80 passing)
 
 | Mandatory scenario | Status | Test file |
 |---|---|---|
+| Tenant isolation for services, staff, schedules, customers, consents, notes | ✅ Phase 2 | `07_services_staff`, `08_customers` |
+| Branch-restricted managers can't change prices, assignments or shifts of other branches | ✅ Phase 2 | `07_services_staff` |
+| Sensitive (allergy/medical) notes hidden without `customers.sensitive` | ✅ Phase 2 | `08_customers` |
 | Tenant A cannot access Tenant B (read/insert/update/delete/RPC, all 14 tenant tables) | ✅ Phase 1 | `02_tenant_isolation` |
 | Staff cannot access unauthorized branches | ✅ Phase 1 | `04_team_roles_branches` |
 | Subscription restrictions cannot be bypassed | ✅ Phase 1 | `05_subscription_gating` |

@@ -66,6 +66,17 @@ Items appear only when the user has a listed permission **and** the plan include
 | `/settings/roles` | Roles + permission matrix | roles.manage or team.view |
 | `/settings/profile` | Personal details, language, password | auth |
 
+## Screens: Phase 2 part 1
+
+| Route | Permission | Contents |
+|---|---|---|
+| `/services` | `services.view` / `services.manage` | Category chips, search, table; category dialog; service dialog with per-branch price / availability |
+| `/employees` | `employees.view` / `employees.manage` / `attendance.manage` | Cards; dialog tabs: profile (+ optional login link), branches & skills, weekly split shifts, leave |
+| `/customers` | `customers.view` | Debounced server search (name EN/AR, partial mobile, email); create with duplicate warning; CSV import (client parse → dry run → import) |
+| `/customers/:id` | `customers.view` | Details, WhatsApp/call links, consent matrix + history, notes (sensitive kinds gated) |
+
+The CSV parser (`features/customers/data/csv.ts`) accepts comma, semicolon or tab delimiters and English or Arabic header names. It is unit-tested.
+
 ## Screens: later phases
 
 Phase 2: calendar (day/week/month, staff and resource columns, drag-and-drop), appointment drawer, walk-in quick add, customer list and profile, services and price lists, employee profiles, shift roster, and the staff portal "My day". Phase 3: POS (touch layout, cart, split payment, receipt), invoice viewer, cash session open/close, packages and memberships. Phase 4: stock, purchase orders, GRN, transfers, commissions, expenses. Phase 5: public booking (`/book/{slug}`), templates, campaigns. Phase 6: `/admin` super-admin and reports.

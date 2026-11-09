@@ -15,7 +15,9 @@ RPC errors arrive in supabase-js as `{ code, message, details }`:
 
 ### Error codes in use
 
-`NOT_AUTHENTICATED, FORBIDDEN, NOT_FOUND, INVALID_NAME, INVALID_SLUG, SLUG_RESERVED, TENANT_SLUG_TAKEN, TENANT_LIMIT_REACHED, INVALID_BUSINESS_TYPE, INVALID_LANGUAGE, INVALID_TIMEZONE, INVALID_EMAIL, INVALID_ROLE, INVALID_BRANCH, BRANCH_REQUIRED, ROLE_ESCALATION_FORBIDDEN, BRANCH_ESCALATION_FORBIDDEN, MEMBER_ALREADY_EXISTS, PLAN_LIMIT_STAFF, PLAN_LIMIT_BRANCHES, PLAN_NOT_CONFIGURED, INVITATION_INVALID, INVITATION_EXPIRED, INVITATION_EMAIL_MISMATCH, EMAIL_NOT_CONFIRMED, TENANT_UNAVAILABLE, OWNER_IMMUTABLE, SELF_MODIFICATION_FORBIDDEN, INVALID_JOB_TITLE, INVALID_STATUS, INVALID_WORKING_HOURS, OVERLAPPING_WORKING_HOURS, AUDIT_LOG_IMMUTABLE`
+`NOT_AUTHENTICATED, FORBIDDEN, NOT_FOUND, INVALID_NAME, INVALID_SLUG, SLUG_RESERVED, TENANT_SLUG_TAKEN, TENANT_LIMIT_REACHED, INVALID_BUSINESS_TYPE, INVALID_LANGUAGE, INVALID_TIMEZONE, INVALID_EMAIL, INVALID_ROLE, INVALID_BRANCH, BRANCH_REQUIRED, ROLE_ESCALATION_FORBIDDEN, BRANCH_ESCALATION_FORBIDDEN, MEMBER_ALREADY_EXISTS, PLAN_LIMIT_STAFF, PLAN_LIMIT_BRANCHES, PLAN_NOT_CONFIGURED, INVITATION_INVALID, INVITATION_EXPIRED, INVITATION_EMAIL_MISMATCH, EMAIL_NOT_CONFIRMED, TENANT_UNAVAILABLE, OWNER_IMMUTABLE, SELF_MODIFICATION_FORBIDDEN, INVALID_JOB_TITLE, INVALID_STATUS, INVALID_WORKING_HOURS, OVERLAPPING_WORKING_HOURS, AUDIT_LOG_IMMUTABLE, PLAN_LIMIT_EMPLOYEES, OVERLAPPING_SHIFTS, INVALID_SHIFTS, SHIFT_BRANCH_NOT_ASSIGNED, INVALID_SERVICE, INVALID_PRICE, INVALID_PERIOD, OVERLAPPING_SPECIAL_PERIODS, INVALID_MOBILE, INVALID_IMPORT, IMPORT_TOO_LARGE`
+
+Per-row import errors (in the `import_customers` result, not raised) also use `INVALID_DATE`, `INVALID_VALUE` and `DUPLICATE`.
 
 ## Database RPC functions
 
@@ -33,7 +35,14 @@ RPC errors arrive in supabase-js as `{ code, message, details }`:
 | `set_member_status(membership, status)` | DEFINER | 1 | ✅ | Owner and self protected |
 | `set_branch_working_hours(branch, hours jsonb)` | INVOKER | 1 | ✅ | Atomic replace; split shifts; overlap check |
 | `get_dashboard_summary(tenant, branch?)` | INVOKER | 1 | ✅ (Phase 1 metrics) | Extended each phase |
-| `calculate_availability(branch, services[], staff?, date)` | INVOKER | 2 | ⏳ | Shifts − leave − bookings − buffers − branch hours |
+| `set_service_branch_prices(service, prices jsonb)` | INVOKER | 2 | ✅ | `services.manage`; replaces overrides for accessible branches only |
+| `set_employee_assignments(employee, branches[], services[])` | INVOKER | 2 | ✅ | `employees.manage`; branches outside the caller's scope are untouched |
+| `set_employee_shifts(employee, shifts jsonb)` | INVOKER | 2 | ✅ | Weekly split shifts; branch must be assigned; overlap check (also enforced by trigger) |
+| `save_branch_special_period(branch, period?, kind, names, from, to, hours)` | INVOKER | 2 | ✅ | `branches.manage`; closures and special hours (Ramadan, Eid); no overlapping periods |
+| `search_customers(tenant, query, limit, include_archived)` | INVOKER | 2 | ✅ | Name (EN/AR) trigram, partial mobile digits, email |
+| `find_customer_duplicates(tenant, mobile, email, first, last, exclude?)` | INVOKER | 2 | ✅ | Same mobile / email, or name similarity ≥ 0.6 |
+| `import_customers(tenant, rows jsonb, dry_run)` | INVOKER | 2 | ✅ | `customers.manage`; savepoint per row; duplicates + per-row errors; ≤ 2000 rows |
+| `calculate_availability(branch, services[], staff?, date)` | INVOKER | 2 | ⏳ | Shifts − leave − special periods − bookings − buffers − branch hours |
 | `create_appointment(…, idempotency_key)` | DEFINER | 2 | ⏳ | Locks + GiST exclusion ⇒ `SLOT_UNAVAILABLE` |
 | `reschedule_appointment`, `cancel_appointment`, `check_in_appointment`, `mark_no_show` | DEFINER | 2 | ⏳ | |
 | `finalize_invoice(invoice, idempotency_key)` | DEFINER | 3 | ⏳ | Numbering, snapshots, stock, commission, ledger |

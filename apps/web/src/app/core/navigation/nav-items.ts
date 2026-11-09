@@ -17,10 +17,10 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'nav.dashboard', icon: 'layout-dashboard', path: '/dashboard', permissions: ['dashboard.view'], module: 'dashboard', section: 'operations' },
   { key: 'nav.appointments', icon: 'calendar-days', path: '/m/appointments', permissions: ['appointments.view', 'appointments.own'], module: 'appointments', section: 'operations', phase: 2 },
-  { key: 'nav.customers', icon: 'users', path: '/m/customers', permissions: ['customers.view'], module: 'customers', section: 'operations', phase: 2 },
+  { key: 'nav.customers', icon: 'users', path: '/customers', permissions: ['customers.view'], module: 'customers', section: 'operations' },
   { key: 'nav.pos', icon: 'receipt', path: '/m/pos', permissions: ['pos.access'], module: 'pos', section: 'operations', phase: 3 },
-  { key: 'nav.services', icon: 'scissors', path: '/m/services', permissions: ['services.view'], module: 'services', section: 'business', phase: 2 },
-  { key: 'nav.employees', icon: 'id-card', path: '/m/employees', permissions: ['employees.view', 'commissions.own'], module: 'employees', section: 'business', phase: 2 },
+  { key: 'nav.services', icon: 'scissors', path: '/services', permissions: ['services.view', 'services.manage'], module: 'services', section: 'business' },
+  { key: 'nav.employees', icon: 'id-card', path: '/employees', permissions: ['employees.view', 'employees.manage', 'attendance.manage'], module: 'employees', section: 'business' },
   { key: 'nav.packages', icon: 'gift', path: '/m/packages', permissions: ['packages.view'], module: 'packages', section: 'business', phase: 3 },
   { key: 'nav.inventory', icon: 'package', path: '/m/inventory', permissions: ['inventory.view'], module: 'inventory', section: 'business', phase: 4 },
   { key: 'nav.purchases', icon: 'truck', path: '/m/purchases', permissions: ['purchases.manage'], module: 'purchases', section: 'business', phase: 4 },

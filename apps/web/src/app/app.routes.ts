@@ -47,6 +47,30 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
+        path: 'services',
+        canActivate: [permissionGuard],
+        data: { permissions: ['services.view', 'services.manage'], module: 'services' },
+        loadComponent: () => import('./features/services/services.page').then((m) => m.ServicesPage),
+      },
+      {
+        path: 'employees',
+        canActivate: [permissionGuard],
+        data: { permissions: ['employees.view', 'employees.manage', 'attendance.manage'], module: 'employees' },
+        loadComponent: () => import('./features/employees/employees.page').then((m) => m.EmployeesPage),
+      },
+      {
+        path: 'customers',
+        canActivate: [permissionGuard],
+        data: { permissions: ['customers.view'], module: 'customers' },
+        loadComponent: () => import('./features/customers/customers.page').then((m) => m.CustomersPage),
+      },
+      {
+        path: 'customers/:id',
+        canActivate: [permissionGuard],
+        data: { permissions: ['customers.view'], module: 'customers' },
+        loadComponent: () => import('./features/customers/customer-detail.page').then((m) => m.CustomerDetailPage),
+      },
+      {
         path: 'settings',
         loadChildren: () => import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
       },
