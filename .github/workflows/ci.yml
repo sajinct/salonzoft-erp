@@ -50,7 +50,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - uses: supabase/setup-cli@v1
-        with: { version: latest }
+        with: { version: 3.0.0 }
       - run: npm ci && npm ci --prefix apps/web
       - name: Start Supabase (applies migrations + seed)
         run: supabase start
@@ -80,7 +80,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - uses: supabase/setup-cli@v1
-        with: { version: latest }
+        with: { version: 3.0.0 }
       - name: Apply database migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
