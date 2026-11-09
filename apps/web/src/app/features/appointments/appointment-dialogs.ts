@@ -361,7 +361,7 @@ export interface DetailsDialogData {
   canManage: boolean;
   myEmployeeIds: string[];
 }
-export type DetailsResult = 'changed' | 'reschedule' | 'checkout' | undefined;
+export type DetailsResult = 'changed' | 'reschedule' | 'checkout' | 'deposit' | undefined;
 
 @Component({
   selector: 'sz-appointment-details-dialog',
@@ -405,6 +405,9 @@ export type DetailsResult = 'changed' | 'reschedule' | 'checkout' | undefined;
           <button type="button" class="btn-secondary" (click)="askReason.set(null)">{{ 'common.back' | t }}</button>
           <button type="button" class="btn-danger" [disabled]="busy()" (click)="apply(target)">{{ 'appointments.action.' + target | tx }}</button>
         } @else {
+          @if (canCheckout() && (a.status === 'booked' || a.status === 'confirmed') && a.customer) {
+            <button type="button" class="btn-secondary" (click)="ref.close('deposit')"><svg lucideIcon="wallet" [size]="15"></svg>{{ 'pos.takeDeposit' | t }}</button>
+          }
           @if (canCheckout()) {
             <button type="button" class="btn-primary" (click)="ref.close('checkout')"><svg lucideIcon="receipt" [size]="15"></svg>{{ 'pos.checkout' | t }}</button>
           }

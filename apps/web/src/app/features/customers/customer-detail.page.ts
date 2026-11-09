@@ -7,7 +7,8 @@ import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18
 import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { ConfirmService, StatePanel } from '../../shared/components/ui';
-import { LocalDatePipe } from '../../shared/pipes/format.pipes';
+import { LocalDatePipe, MoneyPipe } from '../../shared/pipes/format.pipes';
+import { PosService, Wallet } from '../pos/data/pos.service';
 import { CustomerDialog } from './customer-dialog';
 import {
   ConsentChannel,
@@ -21,7 +22,7 @@ import {
 
 @Component({
   selector: 'sz-customer-detail-page',
-  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, TranslateDynamicPipe, LucideDynamicIcon, StatePanel, LocalDatePipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, TranslateDynamicPipe, LucideDynamicIcon, StatePanel, LocalDatePipe, MoneyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/customers" class="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
@@ -66,6 +67,28 @@ import {
               <dt class="text-muted">{{ 'customers.since' | t }}</dt><dd>{{ c.created_at | localDate }}</dd>
             </dl>
           </section>
+
+          @if (wallet(); as w) {
+            @if (w.membership || w.packages.length || w.vouchers.length) {
+              <section class="card p-5">
+                <h2 class="mb-3 font-semibold">{{ 'customers.wallet' | t }}</h2>
+                <div class="space-y-2 text-sm">
+                  @if (w.membership; as m) {
+                    <p><span class="badge-primary">{{ i18n.pick(m.name_en, m.name_ar) }} · −{{ m.discount_percent }}%</span> <span class="text-muted">{{ 'customers.until' | t }} {{ m.ends_at | localDate }}</span></p>
+                  }
+                  @for (p of w.packages; track p.id) {
+                    <div class="rounded-xl bg-surface-2 p-3">
+                      <p class="font-medium">{{ i18n.pick(p.name_en, p.name_ar) }}@if (p.expires_at) { <span class="text-xs text-muted"> · {{ 'customers.until' | t }} {{ p.expires_at | localDate }}</span> }</p>
+                      @for (b of p.balances; track b.service_id) { <p class="text-muted">{{ i18n.pick(b.service_name_en, b.service_name_ar) }}: <strong class="text-ink">{{ b.remaining }}</strong> / {{ b.total }}</p> }
+                    </div>
+                  }
+                  @for (v of w.vouchers; track v.id) {
+                    <p class="flex justify-between"><span>{{ 'pos.voucherKind.' + v.kind | tx }} @if (v.code) { <span class="num text-xs text-muted" dir="ltr">{{ v.code }}</span> }</span><span class="num font-medium">{{ v.balance | money }}</span></p>
+                  }
+                </div>
+              </section>
+            }
+          }
 
           <section class="card p-5">
             <h2 class="font-semibold">{{ 'customers.consent' | t }}</h2>
@@ -145,6 +168,8 @@ export class CustomerDetailPage implements OnInit {
   readonly id = input.required<string>();
 
   private readonly service = inject(CustomersService);
+  private readonly pos = inject(PosService);
+  protected readonly wallet = signal<Wallet | null>(null);
   private readonly ctx = inject(TenantContextService);
   private readonly dialog = inject(Dialog);
   private readonly toast = inject(ToastService);
@@ -185,6 +210,8 @@ export class CustomerDetailPage implements OnInit {
       this.customer.set(customer);
       this.notes.set(notes);
       this.consents.set(consents);
+      // Packages, membership and vouchers (hidden when the role can't see them).
+      this.pos.wallet(this.id()).then((w) => this.wallet.set(w), () => this.wallet.set(null));
     } catch {
       this.customer.set(null); // not found or not permitted (RLS) — same answer
     } finally {

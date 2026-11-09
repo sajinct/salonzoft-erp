@@ -2,20 +2,36 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { LucideDynamicIcon } from '@lucide/angular';
-import { I18nService, TranslatePipe } from '../../core/i18n/i18n.service';
+import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/ui';
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
 import { Customer, CustomersService } from '../customers/data/customers.service';
 import { Employee, EmployeesService } from '../employees/data/employees.service';
+import { Membership, Package, PackagesService } from '../packages/data/packages.service';
 import { Service, ServiceCategory, ServicesService } from '../services/data/services.service';
-import { CashSession, CartLine, InvoiceDoc, PosService } from './data/pos.service';
-import { CashDrawerDialog, CustomItemDialog, DrawerDialogData, PaymentDialog, parseAmount } from './pos-dialogs';
+import { CartLine, CashSession, InvoiceDoc, PosService, Wallet } from './data/pos.service';
+import {
+  AmountDialog,
+  AmountDialogData,
+  CashDrawerDialog,
+  CustomItemDialog,
+  DrawerDialogData,
+  PaymentDialog,
+  PaymentDialogData,
+  parseAmount,
+} from './pos-dialogs';
+
+type Tab = 'services' | 'packages' | 'memberships';
 
 interface UiLine {
-  kind: 'service' | 'custom';
+  kind: CartLine['kind'];
   service_id?: string;
+  package_id?: string;
+  membership_id?: string;
+  customer_package_id: string | null;
+  appointment_id: string | null;
   employee_id: string | null;
   appointment_service_id: string | null;
   description: string;
@@ -27,11 +43,27 @@ interface UiLine {
   // last values computed by the server
   shownPrice: number | null;
   total: number | null;
+  memberPercent: number | null;
 }
+
+const blankLine = (patch: Partial<UiLine> & Pick<UiLine, 'kind' | 'description'>): UiLine => ({
+  customer_package_id: null,
+  appointment_id: null,
+  employee_id: null,
+  appointment_service_id: null,
+  quantity: '1',
+  price: null,
+  discount: '0',
+  priceType: 'fixed',
+  shownPrice: null,
+  total: null,
+  memberPercent: null,
+  ...patch,
+});
 
 @Component({
   selector: 'sz-pos-page',
-  imports: [TranslatePipe, LucideDynamicIcon, PageHeader, StatePanel, MoneyPipe, RouterLink],
+  imports: [TranslatePipe, TranslateDynamicPipe, LucideDynamicIcon, PageHeader, StatePanel, MoneyPipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <sz-page-header [heading]="'nav.pos' | t" [subtitle]="branchName()">
@@ -48,29 +80,59 @@ interface UiLine {
       <!-- Catalogue -->
       <section class="min-w-0">
         <div class="mb-3 flex flex-wrap items-center gap-2">
-          <input type="search" class="input max-w-xs" [placeholder]="'services.search' | t" [value]="query()" (input)="query.set($any($event.target).value)" />
-          <button type="button" class="btn-secondary" (click)="addCustom()"><svg lucideIcon="plus" [size]="15"></svg>{{ 'pos.customItem' | t }}</button>
-        </div>
-        <div class="mb-3 flex flex-wrap gap-1.5">
-          <button type="button" [class]="category() === null ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'" (click)="category.set(null)">{{ 'common.all' | t }}</button>
-          @for (c of categories(); track c.id) {
-            <button type="button" [class]="category() === c.id ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'" (click)="category.set(c.id)">{{ i18n.pick(c.name_en, c.name_ar) }}</button>
+          @for (t of tabs(); track t) {
+            <button type="button" [class]="tab() === t ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'" (click)="tab.set(t)">{{ 'pos.tab.' + t | tx }}</button>
           }
+          <span class="mx-1 h-6 w-px bg-line"></span>
+          <button type="button" class="btn-secondary btn-sm" (click)="addVoucher(null)"><svg lucideIcon="gift" [size]="14"></svg>{{ 'pos.giftVoucher' | t }}</button>
+          <button type="button" class="btn-secondary btn-sm" (click)="addCustom()"><svg lucideIcon="plus" [size]="14"></svg>{{ 'pos.customItem' | t }}</button>
         </div>
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-          @for (s of tiles(); track s.id) {
-            <button type="button" class="card flex flex-col items-start gap-1 p-3 text-start transition hover:border-primary" [disabled]="busy()" (click)="addService(s)">
-              <span class="h-1.5 w-8 rounded-full" [style.background]="s.color || 'var(--sz-primary)'"></span>
-              <span class="line-clamp-2 text-sm font-semibold">{{ i18n.pick(s.name_en, s.name_ar) }}</span>
-              <span class="num text-xs text-muted">
-                @if (s.price_type === 'variable') { {{ 'services.priceType.variable' | t }} }
-                @else { @if (s.price_type === 'from') { {{ 'services.from' | t }} } {{ s.price | money }} }
-              </span>
-            </button>
-          } @empty {
-            <div class="col-span-full card"><sz-state icon="scissors" [heading]="'services.emptyTitle' | t" /></div>
-          }
-        </div>
+
+        @if (tab() === 'services') {
+          <div class="mb-3 flex flex-wrap items-center gap-2">
+            <input type="search" class="input max-w-xs" [placeholder]="'services.search' | t" [value]="query()" (input)="query.set($any($event.target).value)" />
+            <button type="button" [class]="category() === null ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'" (click)="category.set(null)">{{ 'common.all' | t }}</button>
+            @for (c of categories(); track c.id) {
+              <button type="button" [class]="category() === c.id ? 'btn-primary btn-sm' : 'btn-secondary btn-sm'" (click)="category.set(c.id)">{{ i18n.pick(c.name_en, c.name_ar) }}</button>
+            }
+          </div>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            @for (s of tiles(); track s.id) {
+              <button type="button" class="card flex flex-col items-start gap-1 p-3 text-start transition hover:border-primary" [disabled]="busy()" (click)="addService(s)">
+                <span class="h-1.5 w-8 rounded-full" [style.background]="s.color || 'var(--sz-primary)'"></span>
+                <span class="line-clamp-2 text-sm font-semibold">{{ i18n.pick(s.name_en, s.name_ar) }}</span>
+                <span class="num text-xs text-muted">
+                  @if (s.price_type === 'variable') { {{ 'services.priceType.variable' | t }} }
+                  @else { @if (s.price_type === 'from') { {{ 'services.from' | t }} } {{ s.price | money }} }
+                </span>
+              </button>
+            } @empty {
+              <div class="col-span-full card"><sz-state icon="scissors" [heading]="'services.emptyTitle' | t" /></div>
+            }
+          </div>
+        } @else if (tab() === 'packages') {
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            @for (p of activePackages(); track p.id) {
+              <button type="button" class="card flex flex-col items-start gap-1 p-3 text-start hover:border-primary" (click)="addPackage(p)">
+                <span class="text-sm font-semibold">{{ i18n.pick(p.name_en, p.name_ar) }}</span>
+                <span class="num text-xs text-muted">{{ p.price | money }}@if (p.validity_days) { · {{ 'packages.validDays' | t: { n: p.validity_days } }} }</span>
+              </button>
+            } @empty {
+              <div class="col-span-full card"><sz-state icon="gift" [heading]="'packages.empty' | t" /></div>
+            }
+          </div>
+        } @else {
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            @for (m of activeMemberships(); track m.id) {
+              <button type="button" class="card flex flex-col items-start gap-1 p-3 text-start hover:border-primary" (click)="addMembership(m)">
+                <span class="text-sm font-semibold">{{ i18n.pick(m.name_en, m.name_ar) }}</span>
+                <span class="num text-xs text-muted">{{ m.price | money }} · −{{ m.service_discount_percent }}% · {{ 'packages.validDays' | t: { n: m.duration_days } }}</span>
+              </button>
+            } @empty {
+              <div class="col-span-full card"><sz-state icon="gift" [heading]="'packages.noMemberships' | t" /></div>
+            }
+          </div>
+        }
       </section>
 
       <!-- Cart -->
@@ -83,6 +145,26 @@ interface UiLine {
               <span class="num text-xs text-muted" dir="ltr">{{ c.mobile }}</span>
               <button type="button" class="btn-icon h-7 w-7" (click)="setCustomer(null)" [attr.aria-label]="'common.remove' | t"><svg lucideIcon="x" [size]="14"></svg></button>
             </div>
+            @if (wallet(); as w) {
+              <div class="mt-2 space-y-1.5 text-xs">
+                @if (w.membership; as m) {
+                  <p class="badge-primary">{{ i18n.pick(m.name_en, m.name_ar) }} · −{{ m.discount_percent }}%</p>
+                }
+                @for (p of w.packages; track p.id) {
+                  @for (b of p.balances; track b.service_id) {
+                    @if (b.remaining > 0) {
+                      <div class="flex items-center gap-2 rounded-lg bg-surface-2 px-2 py-1">
+                        <span class="flex-1">{{ i18n.pick(p.name_en, p.name_ar) }}: {{ i18n.pick(b.service_name_en, b.service_name_ar) }} <strong>{{ b.remaining }}/{{ b.total }}</strong></span>
+                        <button type="button" class="btn-ghost btn-sm h-6" (click)="redeem(p.id, b.service_id, b.service_name_en, b.service_name_ar)">{{ 'pos.use' | t }}</button>
+                      </div>
+                    }
+                  }
+                }
+                @if (walletCredit() > 0) {
+                  <p class="text-success">{{ 'pos.creditAvailable' | t: { amount: (walletCredit() | money) } }}</p>
+                }
+              </div>
+            }
           } @else {
             <input type="search" class="input" [placeholder]="'pos.customerSearch' | t" [value]="customerQuery()" (input)="searchCustomers($any($event.target).value)" />
             @if (customerResults().length > 0) {
@@ -100,26 +182,31 @@ interface UiLine {
           @for (l of lines(); track $index; let i = $index) {
             <li class="space-y-2 p-3 text-sm">
               <div class="flex items-start gap-2">
-                <span class="flex-1 font-medium">{{ l.description }}</span>
+                <span class="flex-1 font-medium">{{ l.description }}
+                  @if (l.customer_package_id) { <span class="badge-success ms-1">{{ 'pos.fromPackage' | t }}</span> }
+                  @if (l.memberPercent) { <span class="badge-primary ms-1">−{{ l.memberPercent }}%</span> }
+                </span>
                 <span class="num font-semibold">{{ l.total === null ? '…' : (l.total | money) }}</span>
                 <button type="button" class="btn-icon h-7 w-7" (click)="remove(i)" [attr.aria-label]="'common.remove' | t"><svg lucideIcon="trash-2" [size]="14"></svg></button>
               </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <input class="input num h-8 w-16" inputmode="decimal" dir="ltr" [value]="l.quantity" (change)="edit(i, 'quantity', $any($event.target).value)" [attr.aria-label]="'pos.quantity' | t" />
-                <span class="text-muted">×</span>
-                <input class="input num h-8 w-24" inputmode="decimal" dir="ltr" [value]="l.price ?? l.shownPrice ?? ''" [disabled]="!canEditPrice(l)"
-                       (change)="edit(i, 'price', $any($event.target).value)" [attr.aria-label]="'services.price' | t" />
-                @if (canDiscount()) {
-                  <input class="input num h-8 w-20" inputmode="decimal" dir="ltr" [placeholder]="'pos.discount' | t" [value]="l.discount === '0' ? '' : l.discount"
-                         (change)="edit(i, 'discount', $any($event.target).value || '0')" [attr.aria-label]="'pos.discount' | t" />
-                }
-                @if (l.kind === 'service') {
-                  <select class="input h-8 min-w-0 flex-1" [value]="l.employee_id ?? ''" (change)="edit(i, 'employee', $any($event.target).value)" [attr.aria-label]="'appointments.staff' | t">
-                    <option value="">{{ 'pos.noStaff' | t }}</option>
-                    @for (e of employees(); track e.id) { <option [value]="e.id">{{ i18n.pick(e.name_en, e.name_ar) }}</option> }
-                  </select>
-                }
-              </div>
+              @if (l.kind !== 'voucher' && l.kind !== 'membership') {
+                <div class="flex flex-wrap items-center gap-2">
+                  <input class="input num h-8 w-16" inputmode="decimal" dir="ltr" [value]="l.quantity" (change)="edit(i, 'quantity', $any($event.target).value)" [attr.aria-label]="'pos.quantity' | t" />
+                  <span class="text-muted">×</span>
+                  <input class="input num h-8 w-24" inputmode="decimal" dir="ltr" [value]="l.price ?? l.shownPrice ?? ''" [disabled]="!canEditPrice(l)"
+                         (change)="edit(i, 'price', $any($event.target).value)" [attr.aria-label]="'services.price' | t" />
+                  @if (canDiscount() && !l.customer_package_id) {
+                    <input class="input num h-8 w-20" inputmode="decimal" dir="ltr" [placeholder]="'pos.discount' | t" [value]="l.discount === '0' ? '' : l.discount"
+                           (change)="edit(i, 'discount', $any($event.target).value || '0')" [attr.aria-label]="'pos.discount' | t" />
+                  }
+                  @if (l.kind === 'service') {
+                    <select class="input h-8 min-w-0 flex-1" [value]="l.employee_id ?? ''" (change)="edit(i, 'employee', $any($event.target).value)" [attr.aria-label]="'appointments.staff' | t">
+                      <option value="">{{ 'pos.noStaff' | t }}</option>
+                      @for (e of employees(); track e.id) { <option [value]="e.id">{{ i18n.pick(e.name_en, e.name_ar) }}</option> }
+                    </select>
+                  }
+                </div>
+              }
             </li>
           } @empty {
             <li class="p-8 text-center text-sm text-muted">{{ 'pos.emptyCart' | t }}</li>
@@ -145,14 +232,16 @@ interface UiLine {
   `,
 })
 export class PosPage implements OnInit {
-  /** ?appointment=… opens the checkout of a booked visit; ?invoice=… resumes a draft. */
+  /** ?appointment=… checkout of a visit · ?invoice=… resume a draft · ?deposit=… take a booking deposit. */
   readonly appointment = input<string>();
   readonly invoice = input<string>();
+  readonly deposit = input<string>();
 
   protected readonly ctx = inject(TenantContextService);
   protected readonly i18n = inject(I18nService);
   private readonly pos = inject(PosService);
   private readonly servicesApi = inject(ServicesService);
+  private readonly packagesApi = inject(PackagesService);
   private readonly employeesApi = inject(EmployeesService);
   private readonly customersApi = inject(CustomersService);
   private readonly dialog = inject(Dialog);
@@ -162,12 +251,16 @@ export class PosPage implements OnInit {
 
   protected readonly services = signal<Service[]>([]);
   protected readonly categories = signal<ServiceCategory[]>([]);
+  protected readonly packages = signal<Package[]>([]);
+  protected readonly memberships = signal<Membership[]>([]);
   protected readonly employees = signal<Employee[]>([]);
+  protected readonly tab = signal<Tab>('services');
   protected readonly category = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly doc = signal<InvoiceDoc | null>(null);
   protected readonly lines = signal<UiLine[]>([]);
   protected readonly customer = signal<Customer | null>(null);
+  protected readonly wallet = signal<Wallet | null>(null);
   protected readonly customerQuery = signal('');
   protected readonly customerResults = signal<Customer[]>([]);
   protected readonly session = signal<CashSession | null>(null);
@@ -181,6 +274,14 @@ export class PosPage implements OnInit {
   });
   protected readonly canDiscount = computed(() => this.ctx.can('pos.discount'));
   protected readonly canDrawer = computed(() => this.ctx.can('pos.cash_session'));
+  protected readonly activePackages = computed(() => this.packages().filter((p) => p.is_active));
+  protected readonly activeMemberships = computed(() => this.memberships().filter((m) => m.is_active));
+  protected readonly tabs = computed<Tab[]>(() => [
+    'services',
+    ...(this.activePackages().length ? (['packages'] as const) : []),
+    ...(this.activeMemberships().length ? (['memberships'] as const) : []),
+  ]);
+  protected readonly walletCredit = computed(() => (this.wallet()?.vouchers ?? []).reduce((sum, v) => sum + v.balance, 0));
   protected readonly tiles = computed(() => {
     const q = this.query().trim().toLowerCase();
     const cat = this.category();
@@ -206,13 +307,16 @@ export class PosPage implements OnInit {
     const branchId = this.branchId();
     if (!tenantId || !branchId) return;
     try {
-      const [catalogue, staff, session] = await Promise.all([
+      const [catalogue, packs, staff, session] = await Promise.all([
         this.servicesApi.load(tenantId),
+        this.packagesApi.catalogue(tenantId).catch(() => ({ packages: [] as Package[], items: [], memberships: [] as Membership[] })),
         this.employeesApi.list(tenantId).catch(() => ({ employees: [] as Employee[] })),
         this.pos.openSession(branchId),
       ]);
       this.services.set(catalogue.services);
       this.categories.set(catalogue.categories);
+      this.packages.set(packs.packages);
+      this.memberships.set(packs.memberships);
       this.employees.set(staff.employees.filter((e) => e.is_active));
       this.session.set(session);
 
@@ -221,6 +325,10 @@ export class PosPage implements OnInit {
         await this.loadInvoice(id);
       } else if (this.invoice()) {
         await this.loadInvoice(this.invoice()!);
+      } else if (this.deposit()) {
+        const customerId = await this.packagesApi.appointmentCustomer(this.deposit()!);
+        if (customerId) await this.setCustomerById(customerId);
+        this.addVoucher(this.deposit()!);
       }
     } catch (err) {
       this.toast.error(err);
@@ -234,12 +342,28 @@ export class PosPage implements OnInit {
       return;
     }
     this.apply(doc, true);
-    if (doc.customer_id) {
-      try {
-        this.customer.set(await this.customersApi.get(doc.customer_id));
-      } catch {
-        /* the cashier may not see customer profiles */
-      }
+    if (doc.customer_id) await this.setCustomerById(doc.customer_id, false);
+  }
+
+  private async setCustomerById(id: string, save = true): Promise<void> {
+    try {
+      this.customer.set(await this.customersApi.get(id));
+    } catch {
+      // The cashier may not see customer profiles: keep the id via a stub.
+      this.customer.set({ id, first_name: '—' } as Customer);
+    }
+    await this.loadWallet();
+    if (save) this.scheduleSave();
+  }
+
+  private async loadWallet(): Promise<void> {
+    const c = this.customer();
+    this.wallet.set(null);
+    if (!c) return;
+    try {
+      this.wallet.set(await this.pos.wallet(c.id));
+    } catch {
+      /* no wallet access */
     }
   }
 
@@ -248,57 +372,88 @@ export class PosPage implements OnInit {
     this.doc.set(doc);
     if (replaceLines) {
       this.lines.set(
-        doc.items.map((it) => ({
-          kind: it.kind as UiLine['kind'],
-          service_id: it.service_id ?? undefined,
-          employee_id: it.employee_id,
-          appointment_service_id: it.appointment_service_id,
-          description: this.i18n.pick(it.description_en, it.description_ar),
-          quantity: String(it.quantity),
-          price: it.kind === 'custom' || it.unit_price !== it.list_price ? String(it.unit_price) : null,
-          discount: String(it.discount_amount),
-          priceType: this.services().find((s) => s.id === it.service_id)?.price_type ?? 'fixed',
-          shownPrice: it.unit_price,
-          total: it.total_amount,
-        })),
+        doc.items.map((it) =>
+          blankLine({
+            kind: it.kind as UiLine['kind'],
+            service_id: it.service_id ?? undefined,
+            package_id: it.package_id ?? undefined,
+            membership_id: it.membership_id ?? undefined,
+            customer_package_id: it.customer_package_id,
+            appointment_id: it.deposit_appointment_id,
+            employee_id: it.employee_id,
+            appointment_service_id: it.appointment_service_id,
+            description: this.i18n.pick(it.description_en, it.description_ar),
+            quantity: String(it.quantity),
+            price: it.kind === 'custom' || it.kind === 'voucher' || (it.unit_price !== it.list_price && !it.customer_package_id) ? String(it.unit_price) : null,
+            discount: it.member_discount_percent ? '0' : String(it.discount_amount),
+            priceType: this.services().find((s) => s.id === it.service_id)?.price_type ?? 'fixed',
+            shownPrice: it.unit_price,
+            total: it.total_amount,
+            memberPercent: it.member_discount_percent,
+          }),
+        ),
       );
     } else if (doc.items.length === this.lines().length) {
-      this.lines.update((ls) => ls.map((l, i) => ({ ...l, shownPrice: doc.items[i].unit_price, total: doc.items[i].total_amount })));
+      this.lines.update((ls) =>
+        ls.map((l, i) => ({ ...l, shownPrice: doc.items[i].unit_price, total: doc.items[i].total_amount, memberPercent: doc.items[i].member_discount_percent })),
+      );
     }
   }
 
   protected canEditPrice(l: UiLine): boolean {
-    return l.kind === 'custom' || this.canDiscount() || l.priceType !== 'fixed';
+    if (l.customer_package_id || l.kind === 'voucher') return false;
+    if (l.kind === 'custom') return true;
+    if (l.kind === 'package' || l.kind === 'membership') return this.canDiscount();
+    return this.canDiscount() || l.priceType !== 'fixed';
+  }
+
+  private push(line: UiLine): void {
+    this.lines.update((ls) => [...ls, line]);
+    this.scheduleSave();
   }
 
   protected addService(s: Service): void {
-    this.lines.update((ls) => [
-      ...ls,
-      {
-        kind: 'service',
-        service_id: s.id,
-        employee_id: null,
-        appointment_service_id: null,
-        description: this.i18n.pick(s.name_en, s.name_ar),
-        quantity: '1',
-        price: null,
-        discount: '0',
-        priceType: s.price_type,
-        shownPrice: null,
-        total: null,
-      },
-    ]);
-    this.scheduleSave();
+    this.push(blankLine({ kind: 'service', service_id: s.id, description: this.i18n.pick(s.name_en, s.name_ar), priceType: s.price_type }));
+  }
+
+  protected addPackage(p: Package): void {
+    if (!this.customer()) this.toast.info(this.i18n.t('pos.customerNeeded'));
+    this.push(blankLine({ kind: 'package', package_id: p.id, description: this.i18n.pick(p.name_en, p.name_ar) }));
+  }
+
+  protected addMembership(m: Membership): void {
+    if (!this.customer()) this.toast.info(this.i18n.t('pos.customerNeeded'));
+    this.push(blankLine({ kind: 'membership', membership_id: m.id, description: this.i18n.pick(m.name_en, m.name_ar) }));
+  }
+
+  /** Pay a service with a session from one of the customer's packages. */
+  protected redeem(customerPackageId: string, serviceId: string, nameEn: string, nameAr: string | null): void {
+    this.push(blankLine({ kind: 'service', service_id: serviceId, customer_package_id: customerPackageId, description: this.i18n.pick(nameEn, nameAr), priceType: 'fixed' }));
+  }
+
+  protected addVoucher(depositFor: string | null): void {
+    const data: AmountDialogData = {
+      title: this.i18n.t(depositFor ? 'pos.takeDeposit' : 'pos.giftVoucher'),
+      hint: this.i18n.t(depositFor ? 'pos.depositHint' : 'pos.voucherHint'),
+    };
+    this.dialog.open<number, AmountDialogData>(AmountDialog, { data }).closed.subscribe((amount) => {
+      if (!amount) return;
+      this.push(
+        blankLine({
+          kind: 'voucher',
+          appointment_id: depositFor,
+          description: this.i18n.t(depositFor ? 'pos.deposit' : 'pos.giftVoucher'),
+          price: String(amount),
+          shownPrice: amount,
+        }),
+      );
+    });
   }
 
   protected addCustom(): void {
     this.dialog.open<{ description: string; unit_price: number }>(CustomItemDialog).closed.subscribe((item) => {
       if (!item) return;
-      this.lines.update((ls) => [
-        ...ls,
-        { kind: 'custom', employee_id: null, appointment_service_id: null, description: item.description, quantity: '1', price: String(item.unit_price), discount: '0', priceType: 'variable', shownPrice: item.unit_price, total: null },
-      ]);
-      this.scheduleSave();
+      this.push(blankLine({ kind: 'custom', description: item.description, price: String(item.unit_price), priceType: 'variable', shownPrice: item.unit_price }));
     });
   }
 
@@ -323,6 +478,9 @@ export class PosPage implements OnInit {
     this.customer.set(c);
     this.customerResults.set([]);
     this.customerQuery.set('');
+    // Package sessions belong to a customer: drop them when the customer changes.
+    this.lines.update((ls) => ls.filter((l) => !l.customer_package_id));
+    void this.loadWallet();
     this.scheduleSave();
   }
 
@@ -376,6 +534,10 @@ export class PosPage implements OnInit {
       const payload: CartLine[] = snapshot.map((l) => ({
         kind: l.kind,
         service_id: l.service_id,
+        package_id: l.package_id,
+        membership_id: l.membership_id,
+        customer_package_id: l.customer_package_id,
+        appointment_id: l.appointment_id,
         employee_id: l.employee_id,
         appointment_service_id: l.appointment_service_id,
         description: l.kind === 'custom' ? l.description : undefined,
@@ -400,7 +562,8 @@ export class PosPage implements OnInit {
       const id = this.doc()?.id;
       if (!id) return;
       const posted = await this.pos.finalize(id);
-      this.dialog.open<boolean, InvoiceDoc>(PaymentDialog, { data: posted, disableClose: true }).closed.subscribe(() => {
+      const data: PaymentDialogData = { doc: posted, vouchers: this.wallet()?.vouchers ?? [] };
+      this.dialog.open<boolean, PaymentDialogData>(PaymentDialog, { data, disableClose: true }).closed.subscribe(() => {
         void this.router.navigate(['/invoices', posted.id]);
       });
     } catch (err) {
@@ -432,8 +595,9 @@ export class PosPage implements OnInit {
     this.doc.set(null);
     this.lines.set([]);
     this.customer.set(null);
+    this.wallet.set(null);
     this.draftKey = crypto.randomUUID();
-    if (this.appointment() || this.invoice()) void this.router.navigate(['/pos']);
+    if (this.appointment() || this.invoice() || this.deposit()) void this.router.navigate(['/pos']);
   }
 
   drawer(): void {

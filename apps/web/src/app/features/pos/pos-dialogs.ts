@@ -4,7 +4,13 @@ import { LucideDynamicIcon } from '@lucide/angular';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
-import { CashSession, InvoiceDoc, PAYMENT_METHODS, PaymentMethod, PosService } from './data/pos.service';
+import { CashSession, InvoiceDoc, PAYMENT_METHODS, PaymentMethod, PosService, WalletVoucher } from './data/pos.service';
+
+export interface PaymentDialogData {
+  doc: InvoiceDoc;
+  /** The customer's vouchers / store credit / deposits, offered as one-tap choices. */
+  vouchers?: WalletVoucher[];
+}
 
 /** Parse a 3-decimal amount typed by the user; null when invalid. */
 export function parseAmount(raw: string): number | null {
@@ -43,7 +49,7 @@ export function minus(a: number, b: number): number {
       </div>
 
       @if (due() > 0) {
-        <div class="mb-3 grid grid-cols-4 gap-2">
+        <div class="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
           @for (m of methods; track m) {
             <button type="button" class="rounded-xl border px-2 py-2 text-sm font-medium" [class]="method() === m ? 'border-primary bg-primary-soft text-primary' : 'border-line'" (click)="method.set(m)">
               {{ 'pos.method.' + m | tx }}
@@ -55,7 +61,12 @@ export function minus(a: number, b: number): number {
             <label class="label" for="pamt">{{ 'pos.amount' | t }}</label>
             <input id="pamt" class="input num text-lg" inputmode="decimal" dir="ltr" [value]="amount()" (input)="amount.set($any($event.target).value)" />
           </div>
-          @if (method() === 'cash') {
+          @if (method() === 'voucher') {
+            <div class="field">
+              <label class="label" for="pcode">{{ 'pos.voucherCode' | t }}</label>
+              <input id="pcode" class="input num uppercase" dir="ltr" maxlength="20" placeholder="XXXX-XXXX-XXXX" [value]="reference()" (input)="reference.set($any($event.target).value)" />
+            </div>
+          } @else if (method() === 'cash') {
             <div class="field">
               <label class="label" for="ptend">{{ 'pos.tendered' | t }}</label>
               <input id="ptend" class="input num text-lg" inputmode="decimal" dir="ltr" [value]="tendered()" (input)="tendered.set($any($event.target).value)" />
@@ -67,6 +78,16 @@ export function minus(a: number, b: number): number {
             </div>
           }
         </div>
+        @if (method() === 'voucher' && usableVouchers().length > 0) {
+          <div class="mt-3 flex flex-wrap gap-2">
+            @for (v of usableVouchers(); track v.id) {
+              <button type="button" class="rounded-xl border border-line px-3 py-1.5 text-start text-xs hover:border-primary" (click)="useVoucher(v)">
+                <span class="block font-semibold">{{ 'pos.voucherKind.' + v.kind | tx }}</span>
+                <span class="num text-muted">{{ v.balance | money }}</span>
+              </button>
+            }
+          </div>
+        }
         @if (change() !== null) {
           <p class="mt-3 rounded-xl bg-success-soft px-3 py-2 text-sm">{{ 'pos.changeDue' | t }}: <strong class="num">{{ change() | money }}</strong></p>
         }
@@ -97,7 +118,10 @@ export class PaymentDialog {
   private readonly toast = inject(ToastService);
 
   protected readonly methods = PAYMENT_METHODS;
-  protected readonly doc = signal(inject<InvoiceDoc>(DIALOG_DATA));
+  private readonly data = inject<PaymentDialogData>(DIALOG_DATA);
+  protected readonly doc = signal(this.data.doc);
+  private readonly vouchers = signal<WalletVoucher[]>(this.data.vouchers ?? []);
+  protected readonly usableVouchers = computed(() => this.vouchers().filter((v) => v.code && v.balance > 0));
   protected readonly due = computed(() => Math.max(0, this.doc().balance_due));
   protected readonly method = signal<PaymentMethod>('cash');
   protected readonly amount = signal(String(this.doc().balance_due));
@@ -107,6 +131,11 @@ export class PaymentDialog {
   protected changed = false;
   /** One idempotency key per attempt; regenerated after each successful payment. */
   private key = crypto.randomUUID();
+
+  protected useVoucher(v: WalletVoucher): void {
+    this.reference.set(v.code ?? '');
+    this.amount.set(String(Math.min(v.balance, this.due())));
+  }
 
   protected readonly parsed = computed(() => {
     const v = parseAmount(this.amount());
@@ -123,7 +152,16 @@ export class PaymentDialog {
     if (amount === null) return;
     this.busy.set(true);
     try {
+      if (this.method() === 'voucher' && !this.reference().trim()) {
+        this.toast.error({ message: 'INVALID_VOUCHER' });
+        return;
+      }
       await this.pos.pay(this.doc().id, this.method(), amount, this.reference().trim() || null, this.key);
+      if (this.method() === 'voucher') {
+        // the voucher was spent: drop it from the suggestions
+        const code = this.reference().trim().toUpperCase();
+        this.vouchers.update((list) => list.map((v) => (v.code === code ? { ...v, balance: minus(v.balance, amount) } : v)));
+      }
       this.key = crypto.randomUUID();
       this.changed = true;
       const doc = await this.pos.get(this.doc().id);
@@ -293,6 +331,7 @@ export class CreditNoteDialog {
     try {
       const res = await this.pos.creditNote(this.doc.id, items, this.reason().trim(), this.method() || null, this.key);
       this.toast.success(this.i18n.t('pos.creditIssued', { number: res.number }));
+      if (res.store_credit_code) this.toast.info(this.i18n.t('pos.storeCreditIssued', { code: res.store_credit_code }));
       this.ref.close(res.credit_note_id);
     } catch (err) {
       this.toast.error(err);
@@ -331,5 +370,45 @@ export class CustomItemDialog {
     const price = this.parsed();
     if (price === null || !this.desc().trim()) return;
     this.ref.close({ description: this.desc().trim(), unit_price: price });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Amount prompt (gift voucher value, booking deposit)
+// ---------------------------------------------------------------------------
+export interface AmountDialogData {
+  title: string;
+  hint?: string;
+}
+
+@Component({
+  selector: 'sz-amount-dialog',
+  imports: [TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <form class="card w-[min(22rem,calc(100vw-2rem))] p-6" (submit)="$event.preventDefault(); ok()" role="dialog" aria-modal="true">
+      <h2 class="text-lg font-semibold">{{ data.title }}</h2>
+      @if (data.hint) { <p class="hint mt-1">{{ data.hint }}</p> }
+      <div class="field mt-4"><label class="label" for="amt">{{ 'pos.amount' | t }}</label>
+        <input id="amt" class="input num text-lg" inputmode="decimal" dir="ltr" [value]="value()" (input)="value.set($any($event.target).value)" /></div>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" class="btn-secondary" (click)="ref.close()">{{ 'common.cancel' | t }}</button>
+        <button type="submit" class="btn-primary" [disabled]="!parsed()">{{ 'common.continue' | t }}</button>
+      </div>
+    </form>
+  `,
+})
+export class AmountDialog {
+  protected readonly ref = inject<DialogRef<number>>(DialogRef);
+  protected readonly data = inject<AmountDialogData>(DIALOG_DATA);
+  protected readonly value = signal('');
+  protected readonly parsed = computed(() => {
+    const v = parseAmount(this.value());
+    return v !== null && v > 0 ? v : null;
+  });
+
+  ok(): void {
+    const v = this.parsed();
+    if (v) this.ref.close(v);
   }
 }

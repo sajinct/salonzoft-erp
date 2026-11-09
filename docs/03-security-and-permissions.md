@@ -117,6 +117,7 @@ A branch the caller can't see is reported as `INVALID_BRANCH`, never as "exists 
 | Sensitive (allergy/medical) notes hidden without `customers.sensitive` | ✅ Phase 2 | `08_customers` |
 | Prices are decided by the server; overrides and discounts need `pos.discount`; refunds need `pos.refund`; drawers need `pos.cash_session` | ✅ Phase 3 | `10_pos_invoicing` |
 | Posted invoices and payments are immutable even for the database owner (triggers); numbering is gap-free | ✅ Phase 3 | `10_pos_invoicing` |
+| Concurrent package redemption can't overdraw (guarded decrement at posting; the losing till gets `INSUFFICIENT_BALANCE` and uses no invoice number); voucher balances likewise; voucher codes visible only to sellers / package managers / finance | ✅ Phase 3 | `11_packages_vouchers` |
 | Tenant A cannot access Tenant B (read/insert/update/delete/RPC, all 14 tenant tables) | ✅ Phase 1 | `02_tenant_isolation` |
 | Staff cannot access unauthorized branches | ✅ Phase 1 | `04_team_roles_branches` |
 | Subscription restrictions cannot be bypassed | ✅ Phase 1 | `05_subscription_gating` |

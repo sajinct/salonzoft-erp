@@ -71,6 +71,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/pos/invoice.page').then((m) => m.InvoicePage),
       },
       {
+        path: 'packages',
+        canActivate: [permissionGuard],
+        data: { permissions: ['packages.view', 'packages.manage'], module: 'packages' },
+        loadComponent: () => import('./features/packages/packages.page').then((m) => m.PackagesPage),
+      },
+      {
         path: 'services',
         canActivate: [permissionGuard],
         data: { permissions: ['services.view', 'services.manage'], module: 'services' },

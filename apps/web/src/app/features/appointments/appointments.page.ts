@@ -324,6 +324,7 @@ export class AppointmentsPage {
     this.dialog.open<DetailsResult, DetailsDialogData>(AppointmentDetailsDialog, { data }).closed.subscribe((result) => {
       if (result === 'changed') this.scheduleReload();
       if (result === 'checkout') void this.router.navigate(['/pos'], { queryParams: { appointment: appointment.id } });
+      if (result === 'deposit') void this.router.navigate(['/pos'], { queryParams: { deposit: appointment.id } });
       if (result === 'reschedule') {
         const booking: BookingDialogData = { branchId: d.branch.id, timezone: this.timezone(), date: this.date(), employees: d.employees, appointment };
         this.dialog.open<boolean, BookingDialogData>(BookingDialog, { data: booking }).closed.subscribe((changed) => {

@@ -7,8 +7,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { StatePanel } from '../../shared/components/ui';
 import { LocalDatePipe, MoneyPipe } from '../../shared/pipes/format.pipes';
-import { InvoiceDoc, PosService } from './data/pos.service';
-import { CreditNoteDialog, PaymentDialog } from './pos-dialogs';
+import { InvoiceDoc, PosService, WalletVoucher } from './data/pos.service';
+import { CreditNoteDialog, PaymentDialog, PaymentDialogData } from './pos-dialogs';
 
 /** Invoice / credit note: bilingual tax document, payments, refunds. Prints cleanly. */
 @Component({
@@ -178,8 +178,17 @@ export class InvoicePage {
     window.print();
   }
 
-  takePayment(d: InvoiceDoc): void {
-    this.dialog.open<boolean, InvoiceDoc>(PaymentDialog, { data: d, disableClose: true }).closed.subscribe(() => void this.load(d.id));
+  async takePayment(d: InvoiceDoc): Promise<void> {
+    let vouchers: WalletVoucher[] = [];
+    if (d.customer_id) {
+      try {
+        vouchers = (await this.pos.wallet(d.customer_id)).vouchers;
+      } catch {
+        /* wallet not visible — the code can still be typed */
+      }
+    }
+    const data: PaymentDialogData = { doc: d, vouchers };
+    this.dialog.open<boolean, PaymentDialogData>(PaymentDialog, { data, disableClose: true }).closed.subscribe(() => void this.load(d.id));
   }
 
   credit(d: InvoiceDoc): void {

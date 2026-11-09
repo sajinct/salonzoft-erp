@@ -22,7 +22,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'nav.invoices', icon: 'wallet', path: '/invoices', permissions: ['pos.refund', 'pos.cash_session', 'finance.view', 'reports.financial'], module: 'pos', section: 'business' },
   { key: 'nav.services', icon: 'scissors', path: '/services', permissions: ['services.view', 'services.manage'], module: 'services', section: 'business' },
   { key: 'nav.employees', icon: 'id-card', path: '/employees', permissions: ['employees.view', 'employees.manage', 'attendance.manage'], module: 'employees', section: 'business' },
-  { key: 'nav.packages', icon: 'gift', path: '/m/packages', permissions: ['packages.view'], module: 'packages', section: 'business', phase: 3 },
+  { key: 'nav.packages', icon: 'gift', path: '/packages', permissions: ['packages.view', 'packages.manage'], module: 'packages', section: 'business' },
   { key: 'nav.inventory', icon: 'package', path: '/m/inventory', permissions: ['inventory.view'], module: 'inventory', section: 'business', phase: 4 },
   { key: 'nav.purchases', icon: 'truck', path: '/m/purchases', permissions: ['purchases.manage'], module: 'purchases', section: 'business', phase: 4 },
   { key: 'nav.finance', icon: 'wallet', path: '/m/finance', permissions: ['finance.view'], module: 'finance', section: 'business', phase: 4 },

@@ -541,6 +541,76 @@ export type Database = {
           }
         ]
       }
+      customer_memberships: {
+        Row: {
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          ends_at: string
+          id: string
+          invoice_id: string | null
+          invoice_item_id: string | null
+          membership_id: string
+          name_ar: string | null
+          name_en: string
+          starts_at: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          discount_percent: number
+          ends_at: string
+          id?: string
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          membership_id: string
+          name_ar?: string | null
+          name_en: string
+          starts_at?: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          discount_percent?: number
+          ends_at?: string
+          id?: string
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          membership_id?: string
+          name_ar?: string | null
+          name_en?: string
+          starts_at?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_memberships_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_memberships_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_memberships_membership_id_tenant_id_fkey"
+            columns: ["membership_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
       customer_notes: {
         Row: {
           body: string
@@ -584,6 +654,112 @@ export type Database = {
             columns: ["customer_id", "tenant_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      customer_package_balances: {
+        Row: {
+          customer_package_id: string
+          remaining_sessions: number
+          service_id: string
+          tenant_id: string
+          total_sessions: number
+        }
+        Insert: {
+          customer_package_id: string
+          remaining_sessions: number
+          service_id: string
+          tenant_id: string
+          total_sessions: number
+        }
+        Update: {
+          customer_package_id?: string
+          remaining_sessions?: number
+          service_id?: string
+          tenant_id?: string
+          total_sessions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_package_balances_customer_package_id_tenant_id_fkey"
+            columns: ["customer_package_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customer_packages"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_package_balances_service_id_tenant_id_fkey"
+            columns: ["service_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      customer_packages: {
+        Row: {
+          created_at: string
+          customer_id: string
+          expires_at: string | null
+          id: string
+          invoice_id: string | null
+          invoice_item_id: string | null
+          name_ar: string | null
+          name_en: string
+          package_id: string
+          purchased_at: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          expires_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          name_ar?: string | null
+          name_en: string
+          package_id: string
+          purchased_at?: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          expires_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          name_ar?: string | null
+          name_en?: string
+          package_id?: string
+          purchased_at?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_packages_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_packages_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_packages_package_id_tenant_id_fkey"
+            columns: ["package_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
             referencedColumns: ["id", "tenant_id"]
           }
         ]
@@ -816,9 +992,87 @@ export type Database = {
           }
         ]
       }
+      gift_vouchers: {
+        Row: {
+          appointment_id: string | null
+          balance: number
+          code: string
+          created_at: string
+          customer_id: string | null
+          expires_at: string | null
+          id: string
+          initial_amount: number
+          invoice_id: string | null
+          invoice_item_id: string | null
+          kind: string
+          recipient_name: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          balance: number
+          code: string
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          initial_amount: number
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          kind?: string
+          recipient_name?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          balance?: number
+          code?: string
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          initial_amount?: number
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          kind?: string
+          recipient_name?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_vouchers_appointment_id_tenant_id_fkey"
+            columns: ["appointment_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "gift_vouchers_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "gift_vouchers_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
       invoice_items: {
         Row: {
           appointment_service_id: string | null
+          customer_package_id: string | null
+          deposit_appointment_id: string | null
           description_ar: string | null
           description_en: string
           discount_amount: number
@@ -827,8 +1081,11 @@ export type Database = {
           invoice_id: string
           kind: string
           list_price: number
+          member_discount_percent: number | null
+          membership_id: string | null
           net_amount: number
           original_item_id: string | null
+          package_id: string | null
           quantity: number
           service_id: string | null
           sort_order: number
@@ -841,6 +1098,8 @@ export type Database = {
         }
         Insert: {
           appointment_service_id?: string | null
+          customer_package_id?: string | null
+          deposit_appointment_id?: string | null
           description_ar?: string | null
           description_en: string
           discount_amount?: number
@@ -849,8 +1108,11 @@ export type Database = {
           invoice_id: string
           kind: string
           list_price: number
+          member_discount_percent?: number | null
+          membership_id?: string | null
           net_amount?: number
           original_item_id?: string | null
+          package_id?: string | null
           quantity: number
           service_id?: string | null
           sort_order?: number
@@ -863,6 +1125,8 @@ export type Database = {
         }
         Update: {
           appointment_service_id?: string | null
+          customer_package_id?: string | null
+          deposit_appointment_id?: string | null
           description_ar?: string | null
           description_en?: string
           discount_amount?: number
@@ -871,8 +1135,11 @@ export type Database = {
           invoice_id?: string
           kind?: string
           list_price?: number
+          member_discount_percent?: number | null
+          membership_id?: string | null
           net_amount?: number
           original_item_id?: string | null
+          package_id?: string | null
           quantity?: number
           service_id?: string | null
           sort_order?: number
@@ -885,6 +1152,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "invoice_items_customer_package_fk"
+            columns: ["customer_package_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customer_packages"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
             foreignKeyName: "invoice_items_employee_id_tenant_id_fkey"
             columns: ["employee_id", "tenant_id"]
             isOneToOne: false
@@ -896,6 +1170,20 @@ export type Database = {
             columns: ["invoice_id", "tenant_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoice_items_membership_fk"
+            columns: ["membership_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoice_items_package_fk"
+            columns: ["package_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
             referencedColumns: ["id", "tenant_id"]
           },
           {
@@ -1100,6 +1388,59 @@ export type Database = {
           }
         ]
       }
+      memberships: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          name_ar: string | null
+          name_en: string
+          price: number
+          service_discount_percent: number
+          sort_order: number
+          tenant_id: string
+          updated_at: string
+          vat_category: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          is_active?: boolean
+          name_ar?: string | null
+          name_en: string
+          price: number
+          service_discount_percent?: number
+          sort_order?: number
+          tenant_id: string
+          updated_at?: string
+          vat_category?: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          name_ar?: string | null
+          name_en?: string
+          price?: number
+          service_discount_percent?: number
+          sort_order?: number
+          tenant_id?: string
+          updated_at?: string
+          vat_category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       module_entitlements: {
         Row: {
           is_enabled: boolean
@@ -1166,6 +1507,149 @@ export type Database = {
         }
         Relationships: []
       }
+      package_items: {
+        Row: {
+          package_id: string
+          service_id: string
+          sessions: number
+          tenant_id: string
+        }
+        Insert: {
+          package_id: string
+          service_id: string
+          sessions: number
+          tenant_id: string
+        }
+        Update: {
+          package_id?: string
+          service_id?: string
+          sessions?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_items_package_id_tenant_id_fkey"
+            columns: ["package_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "package_items_service_id_tenant_id_fkey"
+            columns: ["service_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      package_redemptions: {
+        Row: {
+          customer_package_id: string
+          id: string
+          invoice_id: string
+          invoice_item_id: string
+          quantity: number
+          redeemed_at: string
+          redeemed_by: string | null
+          reversed_at: string | null
+          service_id: string
+          tenant_id: string
+        }
+        Insert: {
+          customer_package_id: string
+          id?: string
+          invoice_id: string
+          invoice_item_id: string
+          quantity: number
+          redeemed_at?: string
+          redeemed_by?: string | null
+          reversed_at?: string | null
+          service_id: string
+          tenant_id: string
+        }
+        Update: {
+          customer_package_id?: string
+          id?: string
+          invoice_id?: string
+          invoice_item_id?: string
+          quantity?: number
+          redeemed_at?: string
+          redeemed_by?: string | null
+          reversed_at?: string | null
+          service_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_redemptions_customer_package_id_tenant_id_fkey"
+            columns: ["customer_package_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customer_packages"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "package_redemptions_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      packages: {
+        Row: {
+          created_at: string
+          description_en: string | null
+          id: string
+          is_active: boolean
+          name_ar: string | null
+          name_en: string
+          price: number
+          sort_order: number
+          tenant_id: string
+          updated_at: string
+          validity_days: number | null
+          vat_category: string
+        }
+        Insert: {
+          created_at?: string
+          description_en?: string | null
+          id?: string
+          is_active?: boolean
+          name_ar?: string | null
+          name_en: string
+          price: number
+          sort_order?: number
+          tenant_id: string
+          updated_at?: string
+          validity_days?: number | null
+          vat_category?: string
+        }
+        Update: {
+          created_at?: string
+          description_en?: string | null
+          id?: string
+          is_active?: boolean
+          name_ar?: string | null
+          name_en?: string
+          price?: number
+          sort_order?: number
+          tenant_id?: string
+          updated_at?: string
+          validity_days?: number | null
+          vat_category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1180,6 +1664,7 @@ export type Database = {
           received_by: string | null
           reference: string | null
           tenant_id: string
+          voucher_id: string | null
         }
         Insert: {
           amount: number
@@ -1194,6 +1679,7 @@ export type Database = {
           received_by?: string | null
           reference?: string | null
           tenant_id: string
+          voucher_id?: string | null
         }
         Update: {
           amount?: number
@@ -1208,6 +1694,7 @@ export type Database = {
           received_by?: string | null
           reference?: string | null
           tenant_id?: string
+          voucher_id?: string | null
         }
         Relationships: [
           {
@@ -1229,6 +1716,13 @@ export type Database = {
             columns: ["invoice_id", "tenant_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "payments_voucher_fk"
+            columns: ["tenant_id", "voucher_id"]
+            isOneToOne: false
+            referencedRelation: "gift_vouchers"
             referencedColumns: ["id", "tenant_id"]
           }
         ]
@@ -2263,6 +2757,50 @@ export type Database = {
           }
         ]
       }
+      voucher_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string | null
+          kind: string
+          payment_id: string | null
+          tenant_id: string
+          voucher_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          kind: string
+          payment_id?: string | null
+          tenant_id: string
+          voucher_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          payment_id?: string | null
+          tenant_id?: string
+          voucher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_transactions_voucher_id_tenant_id_fkey"
+            columns: ["tenant_id", "voucher_id"]
+            isOneToOne: false
+            referencedRelation: "gift_vouchers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2391,6 +2929,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_customer_wallet: {
+        Args: {
+          p_customer_id: string
+        }
+        Returns: Json
+      }
       get_dashboard_summary: {
         Args: {
           p_tenant: string
@@ -2465,6 +3009,13 @@ export type Database = {
           role_ids: string[]
           branch_ids: string[]
         }[]
+      }
+      lookup_voucher: {
+        Args: {
+          p_tenant: string
+          p_code: string
+        }
+        Returns: Json
       }
       open_cash_session: {
         Args: {
@@ -2562,6 +3113,13 @@ export type Database = {
         Args: {
           p_membership_id: string
           p_status: string
+        }
+        Returns: undefined
+      }
+      set_package_items: {
+        Args: {
+          p_package_id: string
+          p_items: Json
         }
         Returns: undefined
       }

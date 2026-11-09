@@ -57,7 +57,8 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 | `record_payment(invoice, method, amount, reference?, key?)` | DEFINER | 3 | ✅ | Split / partial; no overpayment; cash needs an open session; idempotent |
 | `create_credit_note(invoice, lines?, reason, refund_method?, key?)` | DEFINER | 3 | ✅ | `pos.refund`; never more than invoiced; refunds money paid beyond what is still owed; `CN-{branch}-{year}-000001` |
 | `open_cash_session(branch, float)`, `close_cash_session(session, counted, notes?)` | DEFINER | 3 | ✅ | One open drawer per branch; expected = float + cash in − cash refunded; variance stored |
-| `redeem_package(customer_package, service, qty, idempotency_key)` | DEFINER | 3 | ⏳ | Guarded decrement |
+| Package redemption (a service line with `customer_package_id`) | DEFINER | 3 | ✅ | Checked when saved, guarded decrement in `finalize_invoice`; reversed by credit notes |
+| `get_customer_wallet(customer)` · `lookup_voucher(tenant, code)` · `set_package_items(package, items)` | DEFINER | 3 | ✅ | Packages with balances, membership, vouchers & deposits · voucher status at the till · atomic package contents (`packages.manage`) |
 | `post_inventory_movement`, `transfer_inventory`, `receive_purchase` | DEFINER | 4 | ⏳ | Ledger + balances |
 | `calculate_commission(period)` | DEFINER | 4 | ⏳ | From immutable invoice lines |
 | `award_loyalty_points`, `redeem_loyalty_points` | DEFINER | 4 | ⏳ | |

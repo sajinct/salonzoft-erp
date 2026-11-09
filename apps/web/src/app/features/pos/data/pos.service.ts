@@ -7,8 +7,8 @@ export type InvoiceRow = Tables<'invoices'>;
 export type InvoiceItem = Tables<'invoice_items'>;
 export type Payment = Tables<'payments'>;
 export type CashSession = Tables<'cash_sessions'>;
-export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'other';
-export const PAYMENT_METHODS: PaymentMethod[] = ['cash', 'card', 'bank_transfer', 'other'];
+export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'voucher' | 'other';
+export const PAYMENT_METHODS: PaymentMethod[] = ['cash', 'card', 'bank_transfer', 'voucher', 'other'];
 
 /** Full document as returned by get_invoice / save_invoice_draft / finalize_invoice. */
 export interface InvoiceDoc extends InvoiceRow {
@@ -21,7 +21,13 @@ export interface InvoiceDoc extends InvoiceRow {
 
 /** A cart line as sent to save_invoice_draft. Prices are decided by the server. */
 export interface CartLine {
-  kind: 'service' | 'custom';
+  kind: 'service' | 'custom' | 'package' | 'membership' | 'voucher';
+  package_id?: string;
+  membership_id?: string;
+  /** Service line paid with a session of this customer package. */
+  customer_package_id?: string | null;
+  /** Voucher line sold as a deposit for this appointment. */
+  appointment_id?: string | null;
   service_id?: string;
   employee_id?: string | null;
   appointment_service_id?: string | null;
@@ -29,6 +35,28 @@ export interface CartLine {
   quantity: number;
   unit_price?: number | null;
   discount_amount?: number;
+}
+
+export interface WalletVoucher {
+  id: string;
+  kind: 'gift' | 'store_credit' | 'deposit';
+  balance: number;
+  initial_amount: number;
+  expires_at: string | null;
+  appointment_id: string | null;
+  code: string | null;
+}
+
+export interface Wallet {
+  packages: {
+    id: string;
+    name_en: string;
+    name_ar: string | null;
+    expires_at: string | null;
+    balances: { service_id: string; service_name_en: string; service_name_ar: string | null; total: number; remaining: number }[];
+  }[];
+  membership: { name_en: string; name_ar: string | null; discount_percent: number; ends_at: string } | null;
+  vouchers: WalletVoucher[];
 }
 
 export interface SalesSummary {
@@ -94,7 +122,7 @@ export class PosService {
         p_refund_method: refundMethod ?? undefined,
         p_idempotency_key: key,
       }),
-    ) as unknown as { credit_note_id: string; number: string; total: number; refunded: number };
+    ) as unknown as { credit_note_id: string; number: string; total: number; refunded: number; store_credit_code: string | null };
   }
 
   async list(tenantId: string, opts: { from: Date; branchId: string | null; status: 'all' | 'unpaid' | 'drafts' }): Promise<InvoiceRow[]> {
@@ -121,6 +149,14 @@ export class PosService {
     return unwrap(
       await this.sb.rpc('close_cash_session', { p_session_id: sessionId, p_counted_cash: counted, p_notes: notes ?? undefined }),
     ) as unknown as { expected_cash: number; counted_cash: number; variance: number };
+  }
+
+  async wallet(customerId: string): Promise<Wallet> {
+    return unwrap(await this.sb.rpc('get_customer_wallet', { p_customer_id: customerId })) as unknown as Wallet;
+  }
+
+  async lookupVoucher(tenantId: string, code: string): Promise<{ code: string; balance: number; status: string; expires_at: string | null }> {
+    return unwrap(await this.sb.rpc('lookup_voucher', { p_tenant: tenantId, p_code: code })) as unknown as { code: string; balance: number; status: string; expires_at: string | null };
   }
 
   async summary(tenantId: string, branchId: string | null): Promise<SalesSummary> {

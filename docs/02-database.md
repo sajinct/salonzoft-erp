@@ -162,6 +162,7 @@ erDiagram
 | `20261109000009_customers.sql` | `pg_trgm`, E.164 mobile normalisation, customers (unique mobile per tenant, trigram search), append-only consents, sensitive-aware notes, search / duplicate / import RPCs |
 | `20261109000010_appointments.sql` | `btree_gist`; `appointments` + `appointment_services` (price/name snapshots, blocked ranges incl. buffers) with **exclusion constraints** per employee and per resource; multirange schedule helpers (branch hours ∩ shifts − leave − bookings, branch timezone); booking, reschedule, status, calendar, availability and stats RPCs; realtime publication |
 | `20261109000011_pos_invoicing.sql` | `cash_sessions` (one open per branch), `invoice_sequences` (internal, gap-free), `invoices` (draft → posted, credit notes linked to the original, seller / customer / VAT snapshots), `invoice_items` (per-line VAT, list vs charged price), `payments` (in / out, cash tied to a session); immutability triggers; read-only RLS; POS RPCs |
+| `20261109000012_packages_vouchers.sql` | `packages` + `package_items`, `memberships`, `customer_packages` + `customer_package_balances` (guarded decrement) + `package_redemptions`, `customer_memberships`, `gift_vouchers` (gift / store credit / deposit, `XXXX-XXXX-XXXX` codes) + `voucher_transactions`; invoice line kinds package / membership / voucher and package redemption; payment method `voucher`; POS RPCs redefined; wallet RPCs |
 
 ### Phase 2 part 1 notes
 
