@@ -1246,6 +1246,13 @@ export const ar: Dictionary = {
   'reports.name.customers': 'أفضل العملاء',
   'reports.desc.customers': 'أعلى 500 عميل إنفاقاً في الفترة.',
 
+  'update.ready': 'إصدار جديد من سالونزوفت جاهز',
+  'update.now': 'التحديث الآن',
+  'update.version': 'الإصدار {version} ({commit})',
+  'update.check': 'التحقق من التحديثات',
+  'update.downloading': 'يجري تنزيل إصدار جديد — سيُطبَّق عند انتقالك إلى صفحة أخرى.',
+  'update.latest': 'لديك أحدث إصدار.',
+
   'comingSoon.title': '{module} ضمن خطة التطوير',
   'comingSoon.body': 'هذه الوحدة مجدولة للمرحلة {phase}. القائمة مرتبطة مسبقًا بصلاحياتك وباقتك، وستظهر هنا تلقائيًا عند إطلاقها.',
 

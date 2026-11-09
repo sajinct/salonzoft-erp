@@ -84,3 +84,10 @@ Phase 2 (delivered): `/appointments` day calendar in the branch timezone with on
 ## Accessibility and UX
 
 Labels on every input; `aria-live` toasts; visible focus rings; dialogs via CDK (focus trap, Esc); confirmations for destructive actions; numbers and phone numbers render LTR inside RTL; the layout is tablet-first (reception desks) and responsive down to phones.
+
+## Installable app (PWA), versions and updates
+
+* **Install**: Chrome / Edge show *Install Salonzoft* in the address bar; on iPhone/iPad use Share → *Add to Home Screen*; on Android, *Install app* from the menu. The manifest (`public/manifest.webmanifest`) sets the name, colours, icons (standard + maskable + Apple touch) and shortcuts to Appointments, POS and Customers. Icons are generated from one design with `scripts/make-icons.mjs`.
+* **Offline shell**: the Angular service worker (`ngsw-config.json`, production builds only) caches the app files so it opens instantly; data always comes live from Supabase (never cached).
+* **Version**: `apps/web/package.json` holds the version (bump it for notable releases). CI runs `scripts/stamp-version.mjs`, which writes the version, short commit and build time into the bundle and `ngsw.json`; users see it at the bottom of the user menu (*Version 1.0.0 (abc1234) · Check for updates*) and admins in the console header.
+* **Auto-update** (`AppUpdateService`): checks on start, every 15 minutes and whenever the app returns to the foreground; a new deploy downloads in the background and is applied on the next page change — never in the middle of a sale or form — or immediately with *Update now* on the banner. A broken cache reloads fresh automatically. Every deploy has a new commit stamp, so every deploy reaches installed apps.

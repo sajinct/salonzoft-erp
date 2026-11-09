@@ -1244,6 +1244,13 @@ export const en = {
   'reports.name.customers': 'Top customers',
   'reports.desc.customers': 'Your 500 highest-spending customers in the period.',
 
+  'update.ready': 'A new version of Salonzoft is ready',
+  'update.now': 'Update now',
+  'update.version': 'Version {version} ({commit})',
+  'update.check': 'Check for updates',
+  'update.downloading': 'A new version is downloading — it will be applied when you next change page.',
+  'update.latest': 'You have the latest version.',
+
   'comingSoon.title': '{module} is on the roadmap',
   'comingSoon.body': 'This module is scheduled for Phase {phase}. The navigation is already wired to your permissions and plan, so it will appear here automatically when it ships.',
 

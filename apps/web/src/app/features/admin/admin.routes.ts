@@ -4,6 +4,7 @@ import { LucideDynamicIcon } from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { TranslationKey } from '../../core/i18n/en';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
+import { AppUpdateService } from '../../core/services/app-update.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { AdminService } from './data/admin.service';
@@ -38,7 +39,7 @@ const TABS: { path: string; key: TranslationKey; icon: string; exact: boolean }[
           <span class="grid h-9 w-9 place-items-center rounded-xl bg-ink text-bg"><svg lucideIcon="shield-check" [size]="18"></svg></span>
           <div class="min-w-0">
             <p class="font-[family-name:var(--font-display)] text-lg font-semibold leading-tight">{{ 'app.name' | t }}</p>
-            <p class="text-xs text-muted">{{ 'admin.title' | t }} · {{ 'admin.role.' + admin.role() | tx }}</p>
+            <p class="text-xs text-muted">{{ 'admin.title' | t }} · {{ 'admin.role.' + admin.role() | tx }} · v{{ updates.current.version }} ({{ updates.current.commit }})</p>
           </div>
           <div class="ms-auto flex items-center gap-1">
             <button type="button" class="btn-ghost btn-sm" (click)="i18n.toggle()"><svg lucideIcon="languages" [size]="16"></svg><span class="hidden sm:inline">{{ i18n.lang() === 'en' ? ('common.arabic' | t) : ('common.english' | t) }}</span></button>
@@ -64,6 +65,7 @@ export class AdminShell {
   protected readonly admin = inject(AdminService);
   protected readonly i18n = inject(I18nService);
   protected readonly theme = inject(ThemeService);
+  protected readonly updates = inject(AppUpdateService);
   private readonly auth = inject(AuthService);
   private readonly ctx = inject(TenantContextService);
   private readonly router = inject(Router);

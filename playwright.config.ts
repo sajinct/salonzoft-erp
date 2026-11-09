@@ -7,6 +7,8 @@ export default defineConfig({
   use: {
     baseURL: process.env['E2E_BASE_URL'] ?? 'http://localhost:4200',
     trace: 'retain-on-failure',
+    // Tests must always hit the network, never a cached service-worker copy.
+    serviceWorkers: 'block',
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },

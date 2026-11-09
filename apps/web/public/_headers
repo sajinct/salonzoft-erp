@@ -6,4 +6,15 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-REPLACE_WITH_INLINE_BOOT_SCRIPT_HASH'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-REPLACE_WITH_INLINE_BOOT_SCRIPT_HASH'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+# Service worker files must always be revalidated so installed apps see new deploys.
+/ngsw-worker.js
+  Cache-Control: no-cache
+/ngsw.json
+  Cache-Control: no-cache
+/safety-worker.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache

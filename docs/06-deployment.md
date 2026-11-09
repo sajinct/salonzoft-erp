@@ -76,6 +76,10 @@ Messages are queued by the database (`notification_jobs`) and sent by the `notif
 3. Payments are recorded in `/admin/invoices` (**Mark paid**). When a payment gateway is chosen, its webhook (an Edge Function with the service role) calls `billing_apply_gateway_payment(invoice_id, gateway_ref)`, which is idempotent.
 4. More platform admins: `/admin/settings` → Add admin (the person signs up first). Roles: administrator, billing, support.
 
+## App updates
+
+Nothing to do per release: the Pages workflow stamps the version and the service worker delivers the new build to open tabs and installed apps (see 05-frontend). `ngsw-worker.js`/`ngsw.json` are always revalidated by browsers; on Cloudflare `_headers` also marks them `no-cache`. To force everyone off a bad build, deploy a fix — or, in an emergency, replace `ngsw-worker.js` with `safety-worker.js` to unregister the worker.
+
 ## Cloudflare Pages
 
 * Build command: `npm ci --prefix apps/web && npm --prefix apps/web run build -- --configuration production`

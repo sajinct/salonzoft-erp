@@ -7,7 +7,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../core/auth/auth.service';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../core/i18n/i18n.service';
 import { NavItem, visibleNav } from '../core/navigation/nav-items';
+import { AppUpdateService } from '../core/services/app-update.service';
 import { ThemeService } from '../core/services/theme.service';
+import { ToastService } from '../core/services/toast.service';
 import { TenantContextService } from '../core/tenant/tenant-context.service';
 
 @Component({
@@ -123,6 +125,9 @@ import { TenantContextService } from '../core/tenant/tenant-context.service';
           <button cdkMenuItem type="button" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-danger hover:bg-danger-soft" (click)="signOut()">
             <svg lucideIcon="log-out" [size]="16"></svg> {{ 'shell.signOut' | t }}
           </button>
+          <button cdkMenuItem type="button" class="mt-1 w-full border-t border-line px-3 pb-1 pt-2 text-start text-[11px] text-muted hover:text-ink" (click)="checkUpdates()">
+            {{ 'update.version' | t: { version: updates.current.version, commit: updates.current.commit } }} · {{ 'update.check' | t }}
+          </button>
         </div>
       </ng-template>
 
@@ -155,6 +160,8 @@ export class AppShell {
   protected readonly auth = inject(AuthService);
   protected readonly i18n = inject(I18nService);
   protected readonly theme = inject(ThemeService);
+  protected readonly updates = inject(AppUpdateService);
+  private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   protected readonly menuOpen = signal(false);
@@ -207,6 +214,12 @@ export class AppShell {
   protected onBranchChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.ctx.setBranch(value || null);
+  }
+
+  protected async checkUpdates(): Promise<void> {
+    const found = await this.updates.check();
+    // When found, the service worker downloads it and the update banner appears.
+    this.toast.success(this.i18n.t(found ? 'update.downloading' : 'update.latest'));
   }
 
   protected async signOut(): Promise<void> {

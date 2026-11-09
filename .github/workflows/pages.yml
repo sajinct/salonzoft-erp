@@ -39,6 +39,9 @@ jobs:
             echo "::warning::SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repository variables are not set — the deployed UI will load but cannot sign in."
           fi
 
+      - name: Stamp version (shown in the app; makes installed apps update)
+        run: node scripts/stamp-version.mjs
+
       - run: npx ng build --configuration github-pages
 
       - name: SPA fallback + disable Jekyll
