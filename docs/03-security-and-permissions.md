@@ -104,7 +104,7 @@ Tokens carry 244 bits of CSPRNG randomness and are returned once. Only the SHA-2
 | Storage isolation is enforced | ✅ Phase 1 | `06_storage_isolation` |
 | Failed transactions leave no partial updates | ✅ for onboarding and working hours | `03_onboarding` |
 | OMR precision | ✅ client money library (Vitest) | `money.spec.ts` |
-| Arabic RTL | ✅ unit + E2E written (E2E not yet executed) | `i18n.service.spec.ts`, `tests/e2e` |
+| Arabic RTL | ✅ unit + E2E (executed in CI) | `i18n.service.spec.ts`, `tests/e2e` |
 | Two users can't reserve the same employee/time | ⏳ Phase 2: needs real concurrent connections (PGlite is single-connection) | — |
 | Concurrent package redemption / invoice double-post / webhook retries / inventory double-deduct | ⏳ Phases 3–4 | — |
 | Realtime events are authorized | ⏳ Phase 2 | — |

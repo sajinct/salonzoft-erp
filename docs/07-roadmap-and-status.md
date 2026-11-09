@@ -44,13 +44,13 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 | Suite | Command | Result |
 |---|---|---|
 | Database security and behaviour (PGlite, real migrations) | `npm run test:db` | **57 / 57 passing** |
-| Angular unit tests (Vitest) | `npm run web:test` | **30 / 30 passing** |
+| Angular unit tests (Vitest) | `npm run web:test` | **33 / 33 passing** (incl. routing regression) |
 | Angular production build | `npm run web:build` | **passing** (initial 772 kB raw / ~163 kB transfer) |
-| Playwright E2E (`tests/e2e/phase1.spec.ts`) | `npm run test:e2e` | **Written and type-checked, NOT executed.** Needs Docker plus a local Supabase stack, which this machine lacked |
+| Playwright E2E (`tests/e2e/phase1.spec.ts`) | CI job "E2E against local Supabase (Docker)" | **8 / 8 passing** (desktop + tablet) on real Supabase; migrations verified on real Postgres |
 
 ### Known limitations
 
-1. **No Docker on the build machine.** The SQL ran in PGlite (PostgreSQL 18, WASM) with a shim for `auth`/`storage`, not inside the Supabase stack (PG 17). Features used are PG 15+ compatible, but the first `supabase start` / `db push` should be treated as a verification step. CI runs it.
+1. The local security suite runs in PGlite (PostgreSQL 18, WASM) with an `auth`/`storage` shim. CI additionally runs the migrations and E2E tests on the real Supabase stack (PG 17) in Docker, where they pass.
 2. PGlite is single-connection, so **concurrency tests** (double-booking, double redemption) must run against real Postgres. Planned in Phase 2 as a Node test that opens parallel connections to the local Supabase DB.
 3. Invitation emails are not sent automatically yet. The owner shares the one-time link. Automatic email arrives with `email-send` in Phase 5.
 4. Overnight branch hours (e.g. 18:00–02:00) aren't supported. Ranges must end by 24:00.
