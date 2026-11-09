@@ -26,7 +26,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'nav.inventory', icon: 'package', path: '/inventory', permissions: ['inventory.view', 'inventory.manage'], module: 'inventory', section: 'business' },
   { key: 'nav.purchases', icon: 'truck', path: '/purchases', permissions: ['purchases.manage'], module: 'purchases', section: 'business' },
   { key: 'nav.finance', icon: 'wallet', path: '/finance', permissions: ['finance.view', 'finance.manage', 'expenses.approve', 'commissions.view', 'commissions.own'], module: 'finance', section: 'business' },
-  { key: 'nav.marketing', icon: 'megaphone', path: '/m/marketing', permissions: ['marketing.manage', 'loyalty.manage'], module: 'marketing', section: 'business', phase: 5 },
+  { key: 'nav.marketing', icon: 'megaphone', path: '/marketing', permissions: ['marketing.manage'], module: 'marketing', section: 'business' },
   { key: 'nav.reports', icon: 'chart-column', path: '/m/reports', permissions: ['reports.view', 'reports.financial'], module: 'reports', section: 'admin', phase: 6 },
   {
     key: 'nav.settings', icon: 'settings', path: '/settings',

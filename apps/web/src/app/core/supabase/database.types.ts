@@ -444,6 +444,116 @@ export type Database = {
           }
         ]
       }
+      campaign_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          job_id: string | null
+          tenant_id: string
+          unsubscribe_token: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          job_id?: string | null
+          tenant_id: string
+          unsubscribe_token: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          job_id?: string | null
+          tenant_id?: string
+          unsubscribe_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_recipients_campaign_id_tenant_id_fkey"
+            columns: ["campaign_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "campaign_recipients_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      campaigns: {
+        Row: {
+          body_ar: string | null
+          body_en: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          launched_at: string | null
+          name: string
+          recipients: number
+          scheduled_for: string | null
+          segment: Json
+          status: string
+          subject_ar: string | null
+          subject_en: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          body_ar?: string | null
+          body_en: string
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          launched_at?: string | null
+          name: string
+          recipients?: number
+          scheduled_for?: string | null
+          segment?: Json
+          status?: string
+          subject_ar?: string | null
+          subject_en?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          body_ar?: string | null
+          body_en?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          launched_at?: string | null
+          name?: string
+          recipients?: number
+          scheduled_for?: string | null
+          segment?: Json
+          status?: string
+          subject_ar?: string | null
+          subject_en?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       cash_sessions: {
         Row: {
           branch_id: string
@@ -752,6 +862,70 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customer_consents_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      customer_feedback: {
+        Row: {
+          appointment_id: string
+          branch_id: string
+          comment: string | null
+          created_at: string
+          customer_id: string
+          expires_at: string
+          id: string
+          rating: number | null
+          submitted_at: string | null
+          tenant_id: string
+          token: string
+        }
+        Insert: {
+          appointment_id: string
+          branch_id: string
+          comment?: string | null
+          created_at?: string
+          customer_id: string
+          expires_at?: string
+          id?: string
+          rating?: number | null
+          submitted_at?: string | null
+          tenant_id: string
+          token: string
+        }
+        Update: {
+          appointment_id?: string
+          branch_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_id?: string
+          expires_at?: string
+          id?: string
+          rating?: number | null
+          submitted_at?: string | null
+          tenant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_appointment_id_tenant_id_fkey"
+            columns: ["appointment_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_customer_id_tenant_id_fkey"
             columns: ["customer_id", "tenant_id"]
             isOneToOne: false
             referencedRelation: "customers"
@@ -2061,6 +2235,7 @@ export type Database = {
           attempts: number
           body: string | null
           branch_id: string | null
+          campaign_id: string | null
           channel: string
           created_at: string
           customer_id: string
@@ -2084,6 +2259,7 @@ export type Database = {
           attempts?: number
           body?: string | null
           branch_id?: string | null
+          campaign_id?: string | null
           channel: string
           created_at?: string
           customer_id: string
@@ -2107,6 +2283,7 @@ export type Database = {
           attempts?: number
           body?: string | null
           branch_id?: string | null
+          campaign_id?: string | null
           channel?: string
           created_at?: string
           customer_id?: string
@@ -2132,6 +2309,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "appointments"
             referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "notification_jobs_campaign_fk"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "notification_jobs_customer_id_tenant_id_fkey"
@@ -3514,6 +3698,8 @@ export type Database = {
           currency_decimals: number
           default_language: string
           default_vat_rate: number
+          feedback_delay_hours: number
+          feedback_enabled: boolean
           invoice_prefix: string
           logo_path: string | null
           loyalty_enabled: boolean
@@ -3548,6 +3734,8 @@ export type Database = {
           currency_decimals?: number
           default_language?: string
           default_vat_rate?: number
+          feedback_delay_hours?: number
+          feedback_enabled?: boolean
           invoice_prefix?: string
           logo_path?: string | null
           loyalty_enabled?: boolean
@@ -3582,6 +3770,8 @@ export type Database = {
           currency_decimals?: number
           default_language?: string
           default_vat_rate?: number
+          feedback_delay_hours?: number
+          feedback_enabled?: boolean
           invoice_prefix?: string
           logo_path?: string | null
           loyalty_enabled?: boolean
@@ -3914,6 +4104,12 @@ export type Database = {
           employee_id: string
         }[]
       }
+      cancel_campaign: {
+        Args: {
+          p_campaign_id: string
+        }
+        Returns: number
+      }
       cancel_purchase_order: {
         Args: {
           p_order_id: string
@@ -4023,6 +4219,19 @@ export type Database = {
         }
         Returns: Json
       }
+      get_campaign_stats: {
+        Args: {
+          p_tenant: string
+        }
+        Returns: {
+          campaign_id: string
+          queued: number
+          sent: number
+          failed: number
+          skipped: number
+          cancelled: number
+        }[]
+      }
       get_commission_report: {
         Args: {
           p_tenant: string
@@ -4050,6 +4259,14 @@ export type Database = {
         Args: {
           p_tenant: string
           p_branch_id?: string
+        }
+        Returns: Json
+      }
+      get_feedback_summary: {
+        Args: {
+          p_tenant: string
+          p_from: string
+          p_to: string
         }
         Returns: Json
       }
@@ -4140,6 +4357,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      launch_campaign: {
+        Args: {
+          p_campaign_id: string
+        }
+        Returns: Json
+      }
       list_tenant_members: {
         Args: {
           p_tenant: string
@@ -4181,6 +4404,14 @@ export type Database = {
           p_method: string
           p_reference?: string
           p_note?: string
+        }
+        Returns: Json
+      }
+      preview_campaign_audience: {
+        Args: {
+          p_tenant: string
+          p_segment: Json
+          p_channel: string
         }
         Returns: Json
       }
@@ -4233,9 +4464,29 @@ export type Database = {
         }
         Returns: Json
       }
+      public_get_feedback: {
+        Args: {
+          p_token: string
+        }
+        Returns: Json
+      }
       public_get_salon: {
         Args: {
           p_slug: string
+        }
+        Returns: Json
+      }
+      public_submit_feedback: {
+        Args: {
+          p_token: string
+          p_rating: number
+          p_comment: string
+        }
+        Returns: undefined
+      }
+      public_unsubscribe: {
+        Args: {
+          p_token: string
         }
         Returns: Json
       }

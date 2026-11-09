@@ -36,6 +36,8 @@ export const routes: Routes = [
   // ---- Public online booking (no login; only the public_* RPCs are callable) -----
   { path: 'book/manage/:token', loadComponent: () => import('./features/booking/manage-booking.page').then((m) => m.ManageBookingPage) },
   { path: 'book/:slug', loadComponent: () => import('./features/booking/book.page').then((m) => m.BookPage) },
+  { path: 'feedback/:token', loadComponent: () => import('./features/marketing/public-pages').then((m) => m.FeedbackPage) },
+  { path: 'unsubscribe/:token', loadComponent: () => import('./features/marketing/public-pages').then((m) => m.UnsubscribePage) },
 
   // ---- Salon ERP (authenticated + tenant context) --------------------------------
   {
@@ -73,6 +75,12 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { permissions: ['pos.access', 'pos.refund', 'pos.cash_session', 'finance.view', 'reports.financial'], module: 'pos' },
         loadComponent: () => import('./features/pos/invoice.page').then((m) => m.InvoicePage),
+      },
+      {
+        path: 'marketing',
+        canActivate: [permissionGuard],
+        data: { permissions: ['marketing.manage', 'reports.view'], module: 'marketing' },
+        loadComponent: () => import('./features/marketing/marketing.page').then((m) => m.MarketingPage),
       },
       {
         path: 'finance',

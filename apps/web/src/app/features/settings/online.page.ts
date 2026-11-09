@@ -14,9 +14,9 @@ import { Branch, BranchesService } from './data/settings.services';
 type Template = Tables<'notification_templates'>;
 type Job = Tables<'notification_jobs'>;
 type Defaults = { event: string; language: string; subject: string; body: string }[];
-const EVENTS = ['booking_confirmed', 'booking_reminder', 'booking_cancelled'] as const;
+const EVENTS = ['booking_confirmed', 'booking_reminder', 'booking_cancelled', 'feedback_request'] as const;
 const CHANNELS = ['whatsapp', 'sms', 'email'] as const;
-const PLACEHOLDERS = ['{{name}}', '{{salon}}', '{{branch}}', '{{branch_phone}}', '{{date}}', '{{time}}', '{{services}}', '{{staff}}', '{{link}}', '{{book_link}}'];
+const PLACEHOLDERS = ['{{name}}', '{{salon}}', '{{branch}}', '{{branch_phone}}', '{{date}}', '{{time}}', '{{services}}', '{{staff}}', '{{link}}', '{{book_link}}', '{{feedback_link}}'];
 
 /** Settings → Online booking & messages. */
 @Component({
@@ -78,6 +78,12 @@ const PLACEHOLDERS = ['{{name}}', '{{salon}}', '{{branch}}', '{{branch_phone}}',
               <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" [checked]="s().notify_email" (change)="set('notify_email', $any($event.target).checked)" />{{ 'common.email' | t }}</label>
             </div>
             <div class="field mt-3 w-48"><label class="label" for="orem">{{ 'online.reminderHours' | t }}</label><input id="orem" class="input num" type="number" min="1" max="168" dir="ltr" [value]="s().reminder_hours_before" (change)="set('reminder_hours_before', +$any($event.target).value)" /></div>
+            @if (ctx.hasModule('marketing')) {
+              <div class="mt-4 flex flex-wrap items-end gap-4">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" [checked]="s().feedback_enabled" (change)="set('feedback_enabled', $any($event.target).checked)" />{{ 'online.feedbackEnabled' | t }}</label>
+                <div class="field w-48"><label class="label" for="ofb">{{ 'online.feedbackDelay' | t }}</label><input id="ofb" class="input num" type="number" min="0" max="72" dir="ltr" [value]="s().feedback_delay_hours" (change)="set('feedback_delay_hours', +$any($event.target).value)" /></div>
+              </div>
+            }
             <div class="mt-4 flex justify-end"><button type="button" class="btn-primary" [disabled]="saving() || !dirty()" (click)="saveSettings()">{{ 'common.save' | t }}</button></div>
           </section>
         }

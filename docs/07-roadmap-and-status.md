@@ -8,7 +8,7 @@
 | 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | ✅ **Delivered** (part 1: services, staff, customers · part 2: appointments, availability, calendar, realtime). Week view, resource booking UI and drag-and-drop follow |
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | 🟡 **Parts 1–2 delivered** (POS, invoices, payments, cash drawer, credit notes, print; packages, memberships, gift vouchers, store credit, deposits). Remaining: server PDF, payment gateway |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | ✅ **Delivered** (part 1: inventory, purchasing, retail, consumables · part 2: commissions, expenses & petty cash, P&L, loyalty) |
-| 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | 🟡 **Part 1 delivered** (public booking, notification queue + worker). Part 2: campaigns, feedback |
+| 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | ✅ **Delivered** |
 | 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | |
 | 7. Production hardening | Security review and pen test, load tests, backup-restore drills, VAT/Fawtara and PDPL review, monitoring, go-live checklist | |
 
@@ -144,6 +144,12 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Angular**: `/book/:slug` (mobile-first, bilingual: services → staff/day/time → details with opt-in consent → confirmation), `/book/manage/:token` (view / cancel), Settings → Online booking & messages (link, branches, rules, channels, templates with preview, message log).
 * **Tests**: `npm run test:db` **145 / 145** (10 new + anon allow-list); `ng test` **46 / 46**.
 
+## Phase 5, part 2 report: campaigns & feedback (2026-11-09)
+
+* **Migration `0016_campaigns_feedback`**: campaigns (segment builder, marketing-consent audience, per-language bodies, schedule, launch / stop, delivery stats) sent through the existing notification queue with an automatic unsubscribe link and plan message limits; post-visit feedback requests (delay setting, single-use 30-day link, 1–5 rating and comment) with a summary by staff.
+* **Angular**: `/marketing` (campaigns and feedback tabs), public `/feedback/:token` and `/unsubscribe/:token`, feedback settings and template in Settings → Online booking & messages.
+* **Tests**: `npm run test:db` **153 / 153** (8 new); `ng test` **46 / 46**.
+
 ### Next milestone
 
-Phase 5, part 2: marketing campaigns (segments, marketing consent, scheduled sends through the same queue) and post-visit feedback. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.
+Phase 6: SaaS commercialisation (super-admin console, plan billing, platform reports). Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.

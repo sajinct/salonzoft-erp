@@ -72,6 +72,19 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 
 ## Edge Functions
 
+### Campaigns & feedback (Phase 5, migration 0016)
+
+| RPC | Kind | Permission | Notes |
+|---|---|---|---|
+| `preview_campaign_audience(tenant, segment, channel)` | DEFINER | marketing.manage | `{count, sample, consented}`; segment keys: inactive_days, active_days, min_visits, min_spend, tags, gender, home_branch_id, birthday_this_month, members_only |
+| `launch_campaign(id)` | DEFINER | marketing.manage | Draft → launched; snapshots recipients, enqueues one job each (dedupe `campaign:<id>:<customer>`), counts `messages` usage; `EMPTY_AUDIENCE`, `PLAN_LIMIT_MESSAGES`, `CAMPAIGN_NOT_DRAFT` |
+| `cancel_campaign(id)` | DEFINER | marketing.manage | Cancels queued jobs; `CAMPAIGN_NOT_LAUNCHED` |
+| `get_campaign_stats(tenant)` | DEFINER | marketing.manage | queued / sent / failed / skipped / cancelled per campaign |
+| `get_feedback_summary(tenant, from, to)` | DEFINER | marketing.manage · reports.view | requested, responses, average, distribution, per staff, recent comments |
+| `public_get_feedback(token)`, `public_submit_feedback(token, rating, comment)`, `public_unsubscribe(token)` | DEFINER (anon) | — | Single-use, 30-day feedback link; unsubscribe records a marketing-consent withdrawal |
+
+Completing an appointment cancels its pending reminder and, when feedback is enabled, queues a `feedback_request` after the configured delay.
+
 Phase 1 doesn't need an Edge Function. Onboarding is a single atomic `SECURITY DEFINER` RPC, which is safer than a service-role function doing several writes. Invitations are delivered as one-time links the owner shares (copy, WhatsApp or email link). Automatic invitation emails arrive with `email-send` in Phase 5.
 
 Every function will share `supabase/functions/_shared/` (CORS allow-list, JWT verification via `auth.getUser`, a user-scoped client so RLS applies, input schemas, the error format above, structured logging, idempotency keys, secret access via `Deno.env` / Vault).

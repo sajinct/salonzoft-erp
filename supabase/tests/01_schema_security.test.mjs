@@ -50,7 +50,10 @@ test('SECURITY DEFINER functions pin search_path', async () => {
 // The online booking page is the only anonymous surface: exactly these
 // functions, all prefixed public_ and SECURITY DEFINER. Anything else that
 // becomes callable by anon fails the build.
-const ANON_ALLOWED = ['public_availability', 'public_cancel_booking', 'public_create_booking', 'public_get_booking', 'public_get_salon'];
+const ANON_ALLOWED = [
+  'public_availability', 'public_cancel_booking', 'public_create_booking', 'public_get_booking', 'public_get_feedback',
+  'public_get_salon', 'public_submit_feedback', 'public_unsubscribe',
+];
 
 test('anon can execute only the public_* booking functions', async () => {
   const { rows } = await db.query(`
