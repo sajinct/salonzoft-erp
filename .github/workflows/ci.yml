@@ -56,6 +56,8 @@ jobs:
         run: supabase start
       - name: Lint PL/pgSQL on real Postgres (plpgsql_check)
         run: supabase db lint --level warning
+      - name: Concurrency tests on real Postgres (parallel connections)
+        run: npm run test:concurrency
       - name: Point the web app at the local stack
         run: |
           KEY=$(supabase status -o env | grep -E '^(PUBLISHABLE_KEY|ANON_KEY)=' | head -1 | cut -d= -f2- | tr -d '"')

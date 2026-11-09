@@ -11,6 +11,183 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointment_services: {
+        Row: {
+          appointment_id: string
+          blocked_from: string
+          blocked_until: string
+          branch_id: string
+          created_at: string
+          duration_minutes: number
+          employee_id: string
+          ends_at: string
+          id: string
+          is_active: boolean
+          price: number
+          price_type: string
+          resource_id: string | null
+          service_id: string
+          service_name_ar: string | null
+          service_name_en: string
+          sort_order: number
+          starts_at: string
+          tenant_id: string
+        }
+        Insert: {
+          appointment_id: string
+          blocked_from: string
+          blocked_until: string
+          branch_id: string
+          created_at?: string
+          duration_minutes: number
+          employee_id: string
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          price: number
+          price_type: string
+          resource_id?: string | null
+          service_id: string
+          service_name_ar?: string | null
+          service_name_en: string
+          sort_order?: number
+          starts_at: string
+          tenant_id: string
+        }
+        Update: {
+          appointment_id?: string
+          blocked_from?: string
+          blocked_until?: string
+          branch_id?: string
+          created_at?: string
+          duration_minutes?: number
+          employee_id?: string
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          price?: number
+          price_type?: string
+          resource_id?: string | null
+          service_id?: string
+          service_name_ar?: string | null
+          service_name_en?: string
+          sort_order?: number
+          starts_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_services_appointment_id_tenant_id_fkey"
+            columns: ["appointment_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "appointment_services_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "appointment_services_employee_id_tenant_id_fkey"
+            columns: ["employee_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "appointment_services_resource_id_tenant_id_fkey"
+            columns: ["resource_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "appointment_services_service_id_tenant_id_fkey"
+            columns: ["service_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      appointments: {
+        Row: {
+          branch_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          ends_at: string
+          id: string
+          idempotency_key: string | null
+          notes: string | null
+          source: string
+          starts_at: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          checked_in_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          ends_at: string
+          id?: string
+          idempotency_key?: string | null
+          notes?: string | null
+          source?: string
+          starts_at: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          checked_in_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          ends_at?: string
+          id?: string
+          idempotency_key?: string | null
+          notes?: string | null
+          source?: string
+          starts_at?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "appointments_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1690,6 +1867,33 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_availability: {
+        Args: {
+          p_branch_id: string
+          p_service_ids: string[]
+          p_date: string
+          p_employee_id?: string
+          p_step_minutes?: number
+          p_exclude_appointment?: string
+        }
+        Returns: {
+          starts_at: string
+          employee_id: string
+        }[]
+      }
+      create_appointment: {
+        Args: {
+          p_tenant: string
+          p_branch_id: string
+          p_customer_id: string
+          p_starts_at: string
+          p_items: Json
+          p_notes?: string
+          p_source?: string
+          p_idempotency_key?: string
+        }
+        Returns: Json
+      }
       create_invitation: {
         Args: {
           p_tenant: string
@@ -1730,6 +1934,21 @@ export type Database = {
           reason: string
           score: number
         }[]
+      }
+      get_appointment_stats: {
+        Args: {
+          p_tenant: string
+          p_branch_id?: string
+        }
+        Returns: Json
+      }
+      get_calendar: {
+        Args: {
+          p_branch_id: string
+          p_from: string
+          p_to: string
+        }
+        Returns: Json
       }
       get_dashboard_summary: {
         Args: {
@@ -1791,6 +2010,14 @@ export type Database = {
           branch_ids: string[]
         }[]
       }
+      reschedule_appointment: {
+        Args: {
+          p_appointment_id: string
+          p_starts_at: string
+          p_employee_id?: string
+        }
+        Returns: Json
+      }
       revoke_invitation: {
         Args: {
           p_invitation_id: string
@@ -1818,6 +2045,14 @@ export type Database = {
           p_include_archived?: boolean
         }
         Returns: Database["public"]["Tables"]["customers"]["Row"][]
+      }
+      set_appointment_status: {
+        Args: {
+          p_appointment_id: string
+          p_status: string
+          p_reason?: string
+        }
+        Returns: undefined
       }
       set_branch_working_hours: {
         Args: {
@@ -1854,6 +2089,14 @@ export type Database = {
           p_prices: Json
         }
         Returns: Database["public"]["Tables"]["service_prices"]["Row"][]
+      }
+      update_appointment: {
+        Args: {
+          p_appointment_id: string
+          p_customer_id: string
+          p_notes: string
+        }
+        Returns: undefined
       }
       update_member_access: {
         Args: {

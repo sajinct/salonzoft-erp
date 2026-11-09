@@ -16,7 +16,7 @@ export interface NavItem {
 /** Primary navigation (spec §14). Filtering by permission + entitlement happens in `visibleNav`. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'nav.dashboard', icon: 'layout-dashboard', path: '/dashboard', permissions: ['dashboard.view'], module: 'dashboard', section: 'operations' },
-  { key: 'nav.appointments', icon: 'calendar-days', path: '/m/appointments', permissions: ['appointments.view', 'appointments.own'], module: 'appointments', section: 'operations', phase: 2 },
+  { key: 'nav.appointments', icon: 'calendar-days', path: '/appointments', permissions: ['appointments.view', 'appointments.manage', 'appointments.own'], module: 'appointments', section: 'operations' },
   { key: 'nav.customers', icon: 'users', path: '/customers', permissions: ['customers.view'], module: 'customers', section: 'operations' },
   { key: 'nav.pos', icon: 'receipt', path: '/m/pos', permissions: ['pos.access'], module: 'pos', section: 'operations', phase: 3 },
   { key: 'nav.services', icon: 'scissors', path: '/services', permissions: ['services.view', 'services.manage'], module: 'services', section: 'business' },

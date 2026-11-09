@@ -31,6 +31,8 @@ describe('role-based navigation', () => {
   it('lands staff without dashboard access on an available page', () => {
     expect(landingPath(access(['dashboard.view'], ALL_MODULES))).toBe('/dashboard');
     expect(landingPath(access(['team.view'], ALL_MODULES))).toBe('/settings');
-    expect(landingPath(access(['appointments.own'], ALL_MODULES))).toBe('/settings/profile');
+    // Stylists land on their own day in the calendar ("My day").
+    expect(landingPath(access(['appointments.own'], ALL_MODULES))).toBe('/appointments');
+    expect(landingPath(access(['commissions.own'], ALL_MODULES))).toBe('/settings/profile');
   });
 });

@@ -42,9 +42,13 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 | `search_customers(tenant, query, limit, include_archived)` | INVOKER | 2 | ✅ | Name (EN/AR) trigram, partial mobile digits, email |
 | `find_customer_duplicates(tenant, mobile, email, first, last, exclude?)` | INVOKER | 2 | ✅ | Same mobile / email, or name similarity ≥ 0.6 |
 | `import_customers(tenant, rows jsonb, dry_run)` | INVOKER | 2 | ✅ | `customers.manage`; savepoint per row; duplicates + per-row errors; ≤ 2000 rows |
-| `calculate_availability(branch, services[], staff?, date)` | INVOKER | 2 | ⏳ | Shifts − leave − special periods − bookings − buffers − branch hours |
-| `create_appointment(…, idempotency_key)` | DEFINER | 2 | ⏳ | Locks + GiST exclusion ⇒ `SLOT_UNAVAILABLE` |
-| `reschedule_appointment`, `cancel_appointment`, `check_in_appointment`, `mark_no_show` | DEFINER | 2 | ⏳ | |
+| `calculate_availability(branch, services[], date, staff?, step, exclude?)` | DEFINER | 2 | ✅ | (Branch hours or special period) ∩ shifts − approved leave − bookings, incl. buffers, branch timezone; returns start times + employee. Needs `appointments.view/manage` at the branch |
+| `create_appointment(tenant, branch, customer?, starts_at, items, notes?, source?, idempotency_key?)` | DEFINER | 2 | ✅ | `appointments.manage` + branch; items = services in order with employee or "any"; employee row lock + exclusion constraint ⇒ `SLOT_UNAVAILABLE`; client prices ignored; idempotent (also under concurrent retries) |
+| `reschedule_appointment(appointment, starts_at, employee?)` | DEFINER | 2 | ✅ | Atomic move of all lines; booked prices kept |
+| `set_appointment_status(appointment, status, reason?)` | DEFINER | 2 | ✅ | booked → confirmed → checked_in → in_service → completed; cancel / no-show free the slot. Stylists may start/complete their own |
+| `update_appointment(appointment, customer, notes)` | DEFINER | 2 | ✅ | |
+| `get_calendar(branch, from, to)` | DEFINER | 2 | ✅ | ≤ 31 days; employees + working ranges + appointments; stylists get only their own; customer mobile only with `customers.view` |
+| `get_appointment_stats(tenant, branch?)` | DEFINER | 2 | ✅ | Today's counts in the tenant timezone |
 | `finalize_invoice(invoice, idempotency_key)` | DEFINER | 3 | ⏳ | Numbering, snapshots, stock, commission, ledger |
 | `record_payment(invoice, method, amount, idempotency_key)` | DEFINER | 3 | ⏳ | Split/partial payments, cash session |
 | `process_refund(invoice, lines, idempotency_key)` | DEFINER | 3 | ⏳ | Credit note + reversal postings |

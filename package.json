@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test:db": "node --liftoff-only --test --test-concurrency=1 \"supabase/tests/*.test.mjs\"",
+    "test:concurrency": "node --test --test-concurrency=1 \"supabase/tests/concurrency/*.mjs\"",
     "web:start": "npm --prefix apps/web start",
     "web:build": "npm --prefix apps/web run build",
     "web:test": "npm --prefix apps/web test -- --watch=false",
@@ -27,6 +28,7 @@
     "@playwright/test": "^1.65.0",
     "@supabase/supabase-js": "^2.119.0",
     "@types/node": "^26.6.6",
+    "pg": "^8.23.1",
     "typescript": "^7.0.2"
   }
 }

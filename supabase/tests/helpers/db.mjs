@@ -2,6 +2,7 @@
 // order, and offers helpers to run SQL as a specific authenticated user.
 import { PGlite } from '@electric-sql/pglite';
 import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
+import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +21,7 @@ export function migrationFiles() {
 /** Fresh database with all migrations applied. */
 export async function createDb() {
   // Extensions used by migrations (Supabase installs them into `extensions`).
-  const db = new PGlite({ extensions: { pg_trgm } });
+  const db = new PGlite({ extensions: { pg_trgm, btree_gist } });
   await db.exec(readFileSync(join(here, 'supabase-shim.sql'), 'utf8'));
   for (const file of migrationFiles()) {
     try {

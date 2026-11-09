@@ -79,7 +79,7 @@ The CSV parser (`features/customers/data/csv.ts`) accepts comma, semicolon or ta
 
 ## Screens: later phases
 
-Phase 2: calendar (day/week/month, staff and resource columns, drag-and-drop), appointment drawer, walk-in quick add, customer list and profile, services and price lists, employee profiles, shift roster, and the staff portal "My day". Phase 3: POS (touch layout, cart, split payment, receipt), invoice viewer, cash session open/close, packages and memberships. Phase 4: stock, purchase orders, GRN, transfers, commissions, expenses. Phase 5: public booking (`/book/{slug}`), templates, campaigns. Phase 6: `/admin` super-admin and reports.
+Phase 2 (delivered): `/appointments` day calendar in the branch timezone with one column per stylist, off-shift shading, now-line, click-to-book, booking dialog (customer search / quick add / walk-in, services, any or specific staff, live free times), details dialog with status actions and reschedule, realtime refresh; stylists land on their own column ("My day"). Still to come: week view, resource columns, drag-and-drop. Phase 3: POS (touch layout, cart, split payment, receipt), invoice viewer, cash session open/close, packages and memberships. Phase 4: stock, purchase orders, GRN, transfers, commissions, expenses. Phase 5: public booking (`/book/{slug}`), templates, campaigns. Phase 6: `/admin` super-admin and reports.
 
 ## Accessibility and UX
 

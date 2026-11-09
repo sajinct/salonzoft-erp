@@ -47,6 +47,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
+        path: 'appointments',
+        canActivate: [permissionGuard],
+        data: { permissions: ['appointments.view', 'appointments.manage', 'appointments.own'], module: 'appointments' },
+        loadComponent: () => import('./features/appointments/appointments.page').then((m) => m.AppointmentsPage),
+      },
+      {
         path: 'services',
         canActivate: [permissionGuard],
         data: { permissions: ['services.view', 'services.manage'], module: 'services' },

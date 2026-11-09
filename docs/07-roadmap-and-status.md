@@ -5,7 +5,7 @@
 | Phase | Scope | Status |
 |---|---|---|
 | **1. SaaS foundation** | Angular app, Supabase integration, migrations, auth, tenants, memberships, roles and permissions, RLS, branches, bilingual layout, entitlement foundation, first dashboard | ✅ **Milestone 1 delivered** (see below) |
-| 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | 🟡 **Part 1 delivered** (services, staff, customers); part 2 (appointments) next |
+| 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | ✅ **Delivered** (part 1: services, staff, customers · part 2: appointments, availability, calendar, realtime). Week view, resource booking UI and drag-and-drop follow |
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | |
 | 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | |
@@ -95,6 +95,14 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * Availability engine, appointments, calendar, realtime and concurrency tests: Phase 2 part 2.
 * Customer erasure/export (PDPL): Phase 6/7, through an audited privacy workflow.
 
-### Next milestone: Phase 2, part 2 (appointments)
+---
 
-`appointments` with btree_gist exclusion constraints, `calculate_availability` (shifts − leave − special periods − bookings − buffers − branch hours), `create_appointment` with locking and idempotency, calendar UI, realtime channels, and **real-Postgres concurrency tests**.
+## Phase 2, part 2 report: appointments (2026-11-09)
+
+* **Migration `0010_appointments`**: appointments + service lines (snapshots of name, price, duration), `btree_gist` exclusion constraints so one employee (or resource) can never hold two overlapping active bookings, buffers included. Availability is computed with multiranges in the branch timezone from branch hours or holiday/Ramadan periods, shifts, approved leave and bookings. Booking RPCs lock the employee row, so concurrent requests queue; a lost race is `SLOT_UNAVAILABLE`. Idempotency keys make retries safe, even when retries race each other. Apps have read-only RLS: front desk sees the branch, stylists only their own lines; every write is an audited RPC.
+* **Angular**: `/appointments` day calendar (see 05-frontend), booking and details dialogs, live updates via Supabase Realtime.
+* **Tests**: `npm run test:db` **94 / 94** (14 new); `ng test` **45 / 45** (6 new timezone tests); new `npm run test:concurrency` (12 parallel bookings of one slot ⇒ exactly 1 wins; 8 "any staff" requests ⇒ exactly 2; racing idempotent retries ⇒ one appointment) runs in CI on real Postgres.
+
+### Next milestone: Phase 3 (revenue operations)
+
+POS checkout from a completed appointment, VAT invoices with gap-free numbering and snapshots, split/partial payments, cash sessions, refunds and credit notes. Also pending from Phase 2: week view, resource assignment in booking, drag-and-drop, dashboard "today" card.

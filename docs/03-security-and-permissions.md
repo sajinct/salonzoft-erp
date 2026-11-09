@@ -122,6 +122,6 @@ A branch the caller can't see is reported as `INVALID_BRANCH`, never as "exists 
 | Failed transactions leave no partial updates | ✅ for onboarding and working hours | `03_onboarding` |
 | OMR precision | ✅ client money library (Vitest) | `money.spec.ts` |
 | Arabic RTL | ✅ unit + E2E (executed in CI) | `i18n.service.spec.ts`, `tests/e2e` |
-| Two users can't reserve the same employee/time | ⏳ Phase 2: needs real concurrent connections (PGlite is single-connection) | — |
+| Two users can't reserve the same employee/time | ✅ Phase 2: exclusion constraint (PGlite) + 12 / 8 parallel real-Postgres connections in CI (`npm run test:concurrency`) | `09_appointments`, `concurrency/appointments.concurrency.mjs` |
 | Concurrent package redemption / invoice double-post / webhook retries / inventory double-deduct | ⏳ Phases 3–4 | — |
-| Realtime events are authorized | ⏳ Phase 2 | — |
+| Realtime events are authorized | ✅ by design: Supabase Realtime applies the table's RLS per subscriber; booking tables are read-only for apps and their RLS is tested | `09_appointments` |

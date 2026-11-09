@@ -160,6 +160,7 @@ erDiagram
 | `20261109000007_storage.sql` | `tenant-assets` bucket + path-based policies |
 | `20261109000008_services_staff.sql` | Service catalogue, branch prices, resources, employees, branch/skill assignments, weekly shifts (overlap trigger), leave, special periods (holidays / Ramadan hours), employee plan limit, 4 RPCs |
 | `20261109000009_customers.sql` | `pg_trgm`, E.164 mobile normalisation, customers (unique mobile per tenant, trigram search), append-only consents, sensitive-aware notes, search / duplicate / import RPCs |
+| `20261109000010_appointments.sql` | `btree_gist`; `appointments` + `appointment_services` (price/name snapshots, blocked ranges incl. buffers) with **exclusion constraints** per employee and per resource; multirange schedule helpers (branch hours ∩ shifts − leave − bookings, branch timezone); booking, reschedule, status, calendar, availability and stats RPCs; realtime publication |
 
 ### Phase 2 part 1 notes
 
