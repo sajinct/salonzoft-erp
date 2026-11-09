@@ -2,7 +2,7 @@
 
 Multi-tenant **Salon & Spa ERP SaaS** for Oman (then GCC and India), built with **Angular 22** and **Supabase** (PostgreSQL, Auth, RLS, Storage, Realtime, Edge Functions). There is no separate API server.
 
-> **Status: Phase 1 (SaaS foundation) delivered.** Auth, self-service onboarding, multi-tenant/branch isolation, roles and permissions, subscriptions and entitlements, settings (business, VAT, branches and hours, team, roles, profile), the first dashboard, and English/Arabic RTL. 57 database security tests, 33 frontend unit tests and 8 Playwright E2E tests (on real Supabase in CI) pass. Live preview: https://sajinct.github.io/salonzoft-erp/ See [docs/07-roadmap-and-status.md](docs/07-roadmap-and-status.md).
+> **Status: Phase 1 (SaaS foundation) delivered.** Auth, self-service onboarding, multi-tenant/branch isolation, roles and permissions, subscriptions and entitlements, settings (business, VAT, branches and hours, team, roles, profile), the first dashboard, and English/Arabic RTL. 57 database security tests, 33 frontend unit tests and 8 Playwright E2E tests (on real Supabase in CI) pass. Live preview: https://erp.salonzoft.com/ See [docs/07-roadmap-and-status.md](docs/07-roadmap-and-status.md).
 
 ## Repository layout
 

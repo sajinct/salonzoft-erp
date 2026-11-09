@@ -96,7 +96,7 @@
                   "with": "src/environments/environment.pages.ts"
                 }
               ],
-              "baseHref": "/salonzoft-erp/"
+              "baseHref": "/"
             }
           },
           "defaultConfiguration": "production"
