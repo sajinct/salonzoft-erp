@@ -33,6 +33,10 @@ export const routes: Routes = [
     children: [{ path: '', canActivate: guards, loadComponent: page }],
   })),
 
+  // ---- Public online booking (no login; only the public_* RPCs are callable) -----
+  { path: 'book/manage/:token', loadComponent: () => import('./features/booking/manage-booking.page').then((m) => m.ManageBookingPage) },
+  { path: 'book/:slug', loadComponent: () => import('./features/booking/book.page').then((m) => m.BookPage) },
+
   // ---- Salon ERP (authenticated + tenant context) --------------------------------
   {
     path: '',

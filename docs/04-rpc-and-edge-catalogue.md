@@ -66,7 +66,9 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 | `record_expense(branch, category, date, amount, vat, description, method, from_drawer?, supplier?, ref?)` · `review_expense(expense, approve, reason?)` · `get_finance_summary(tenant, from, to, branch?)` | DEFINER | 4 | ✅ | Approval flow, petty cash from the drawer, P&L (revenue − COGS − products used − commission − expenses) |
 | Loyalty earn / reverse (posting trigger) · `redeem_loyalty_points(customer, points)` · `adjust_loyalty_points(customer, points, note)` | DEFINER | 4 | ✅ | Points per OMR of net spend (vouchers excluded); redeemed into store credit with a guarded decrement; manual adjustments need `loyalty.manage` |
 | `get_sales_report(tenant, from, to, branch?)` and other reports | INVOKER | 4–6 | ⏳ | Permission-gated |
-| Booking portal: `public_get_salon(slug)`, `public_availability(…)`, `public_create_booking(…)` | DEFINER (anon) | 5 | ⏳ | Minimal fields, rate-limited via Edge Function + captcha |
+| Booking portal: `public_get_salon(slug)`, `public_availability(slug, branch, services, date, staff?)`, `public_create_booking(…, idempotency_key)`, `public_get_booking(token)`, `public_cancel_booking(token)` | DEFINER (anon) | 5 | ✅ | Online branches / services only, lead time and horizon, rate limits per mobile (3/day) and IP (10/h), find-or-create customer by mobile without changing existing profiles, consent capture, self-cancel window |
+| `claim_notification_jobs(limit)` · `complete_notification_job(job, outcome, …)` | DEFINER (service role only) | 5 | ✅ | Worker API: SKIP LOCKED claim with rendering; retries 1/2/4/8 min, gives up after 5 |
+| `preview_notification(tenant, body)` · `get_notification_defaults()` | DEFINER | 5 | ✅ | Template editor |
 
 ## Edge Functions
 
@@ -79,7 +81,7 @@ Every function will share `supabase/functions/_shared/` (CORS allow-list, JWT ve
 | `tenant-invitation` | User JWT, then service role scoped to the invitation | 5 | Create invitation via RPC as the user, then send the email |
 | `email-send` | Internal (pg_net from worker) | 5 | Transactional email provider |
 | `whatsapp-send` / `whatsapp-webhook` | Internal / Meta signature (`X-Hub-Signature-256`) | 5 | WhatsApp Cloud API, approved templates only |
-| `notification-worker` / `scheduled-reminders` | pg_cron + shared secret | 5 | Process `notification_jobs` with retries and backoff |
+| `notification-worker` ✅ | pg_cron + shared secret (`NOTIFY_CRON_SECRET`) | 5 | Claims due jobs, sends via WhatsApp Cloud API / Twilio SMS / Resend email, reports outcome (reminders are queued by DB triggers — no separate scheduler) |
 | `payment-create` / `payment-webhook` | User JWT / gateway HMAC | 3 | Oman gateway adapter (e.g. Thawani, OmanNet, bank PGs). Idempotent by gateway event id |
 | `generate-invoice-document` | User JWT | 3 | Bilingual PDF to the private bucket, signed URL |
 | `e-invoice-submit` | Internal | 6+ | Fawtara integration layer (disabled until requirements are verified) |

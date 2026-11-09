@@ -41,6 +41,31 @@ Without Docker, `npm run db:types:offline` produces the same Supabase-format typ
 8. **Storage:** the bucket is created by migration 0007. Confirm it shows *private*.
 9. **Secrets:** `supabase secrets set APP_URL=… ALLOWED_ORIGINS=…` (plus provider keys as phases ship).
 
+## Notifications worker (WhatsApp / SMS / email)
+
+Messages are queued by the database (`notification_jobs`) and sent by the `notification-worker` Edge Function, called every minute by `pg_cron`. Until a provider is configured, its jobs end as **skipped** (shown in Settings → Online booking & messages → Recent messages).
+
+1. Deploy the function: `npx supabase functions deploy notification-worker --remote` (it is `verify_jwt = false`: it authenticates with its own secret).
+2. Secrets (`npx supabase secrets set KEY=value --remote`):
+   * `NOTIFY_CRON_SECRET` — a long random string (required).
+   * WhatsApp Cloud API: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`. Business-initiated messages need an approved template per event and language whose body is a single `{{1}}` variable; map them with `WHATSAPP_TEMPLATE_BOOKING_CONFIRMED_EN=…`, `…_BOOKING_REMINDER_AR=…` etc.
+   * SMS (Twilio): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`.
+   * Email (Resend): `RESEND_API_KEY`, `EMAIL_FROM` (a verified sender).
+3. Schedule it (SQL editor, once per project; the secret lives in Vault, never in the job text):
+   ```sql
+   create extension if not exists pg_cron;
+   create extension if not exists pg_net;
+   select vault.create_secret('<same NOTIFY_CRON_SECRET>', 'notify_cron_secret');
+   select cron.schedule('notification-worker', '* * * * *', $
+     select net.http_post(
+       url := 'https://<project-ref>.supabase.co/functions/v1/notification-worker',
+       headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization',
+                  'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'notify_cron_secret')),
+       body := '{}'::jsonb);
+   $);
+   ```
+4. The public booking link in messages uses `app.platform_settings.public_app_url` (default `https://erp.salonzoft.com`).
+
 ## Cloudflare Pages
 
 * Build command: `npm ci --prefix apps/web && npm --prefix apps/web run build -- --configuration production`

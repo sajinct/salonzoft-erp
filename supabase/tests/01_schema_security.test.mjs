@@ -47,11 +47,41 @@ test('SECURITY DEFINER functions pin search_path', async () => {
   assert.deepEqual(rows, []);
 });
 
-test('anon cannot execute any public function', async () => {
+// The online booking page is the only anonymous surface: exactly these
+// functions, all prefixed public_ and SECURITY DEFINER. Anything else that
+// becomes callable by anon fails the build.
+const ANON_ALLOWED = ['public_availability', 'public_cancel_booking', 'public_create_booking', 'public_get_booking', 'public_get_salon'];
+
+test('anon can execute only the public_* booking functions', async () => {
   const { rows } = await db.query(`
+    select p.proname, p.prosecdef from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+    order by p.proname`);
+  assert.deepEqual(rows.map((r) => r.proname), ANON_ALLOWED, `anon can execute: ${rows.map((r) => r.proname).join(', ')}`);
+  for (const r of rows) assert.equal(r.prosecdef, true, `${r.proname} must be SECURITY DEFINER`);
+});
+
+test('anon can reach no table and no app function', async () => {
+  const { rows: tables } = await db.query(`
+    select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname in ('public', 'app') and c.relkind in ('r', 'v', 'p')
+      and (has_table_privilege('anon', c.oid, 'select') or has_table_privilege('anon', c.oid, 'insert')
+           or has_table_privilege('anon', c.oid, 'update') or has_table_privilege('anon', c.oid, 'delete'))
+      and c.relname <> 'subscription_plans'`);
+  assert.deepEqual(tables, []);
+  const { rows: fns } = await db.query(`
     select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')`);
-  assert.deepEqual(rows, [], `anon can execute: ${rows.map((r) => r.proname).join(', ')}`);
+    where n.nspname = 'app' and has_function_privilege('anon', p.oid, 'execute')`);
+  assert.deepEqual(fns, []);
+});
+
+test('notification worker functions are service-role only', async () => {
+  for (const fn of ['claim_notification_jobs', 'complete_notification_job']) {
+    const { rows } = await db.query(`
+      select has_function_privilege('authenticated', p.oid, 'execute') as auth, has_function_privilege('anon', p.oid, 'execute') as anon
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = $1`, [fn]);
+    assert.deepEqual(rows, [{ auth: false, anon: false }], fn);
+  }
 });
 
 test('PUBLIC has no EXECUTE on SECURITY DEFINER functions', async () => {

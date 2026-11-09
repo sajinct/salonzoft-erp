@@ -8,7 +8,7 @@
 | 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | ✅ **Delivered** (part 1: services, staff, customers · part 2: appointments, availability, calendar, realtime). Week view, resource booking UI and drag-and-drop follow |
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | 🟡 **Parts 1–2 delivered** (POS, invoices, payments, cash drawer, credit notes, print; packages, memberships, gift vouchers, store credit, deposits). Remaining: server PDF, payment gateway |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | ✅ **Delivered** (part 1: inventory, purchasing, retail, consumables · part 2: commissions, expenses & petty cash, P&L, loyalty) |
-| 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | |
+| 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | 🟡 **Part 1 delivered** (public booking, notification queue + worker). Part 2: campaigns, feedback |
 | 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | |
 | 7. Production hardening | Security review and pen test, load tests, backup-restore drills, VAT/Fawtara and PDPL review, monitoring, go-live checklist | |
 
@@ -135,6 +135,15 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Angular**: `/finance` (overview P&L with VAT payable, expenses with approval, commissions report with payouts and rules — stylists see only their own); loyalty settings; points and "Redeem" in the POS wallet; points on customer profiles.
 * **Tests**: `npm run test:db` **133 / 133** (10 new); `ng test` **46 / 46**.
 
+---
+
+## Phase 5, part 1 report: online booking & notifications (2026-11-09)
+
+* **Migration `0015_online_booking_notifications`**: public booking through five anon `public_*` functions only (allow-list enforced by the schema test), using the same booking engine (no double-booking), lead time / horizon / self-cancel window, rate limits, customer find-or-create by mobile that never edits an existing profile, consent capture, secret manage token. Consent-based notification queue fed by appointment triggers (confirmation, reminder, cancellation, reschedule), rendered at send time from editable bilingual templates, claimed with SKIP LOCKED, retried with backoff.
+* **Edge Function** `notification-worker` (WhatsApp Cloud API, Twilio SMS, Resend email; skipped when not configured). Setup in 06-deployment.
+* **Angular**: `/book/:slug` (mobile-first, bilingual: services → staff/day/time → details with opt-in consent → confirmation), `/book/manage/:token` (view / cancel), Settings → Online booking & messages (link, branches, rules, channels, templates with preview, message log).
+* **Tests**: `npm run test:db` **145 / 145** (10 new + anon allow-list); `ng test` **46 / 46**.
+
 ### Next milestone
 
-Phase 5 (customer engagement): public booking page per salon, WhatsApp / SMS / email notifications with a queue and reminders, campaigns, feedback. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.
+Phase 5, part 2: marketing campaigns (segments, marketing consent, scheduled sends through the same queue) and post-visit feedback. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.

@@ -2,7 +2,7 @@
 
 Multi-tenant **Salon & Spa ERP SaaS** for Oman (then GCC and India), built with **Angular 22** and **Supabase** (PostgreSQL, Auth, RLS, Storage, Realtime, Edge Functions). There is no separate API server.
 
-> **Status: Phase 1 (SaaS foundation) and Phase 2 (services, employees and shifts, customers, appointments with a no-double-booking guarantee, live calendar) and Phase 3 (POS, VAT invoices, payments, cash drawer, credit notes, packages, memberships, gift vouchers, deposits) and Phase 4 (inventory, purchasing, retail and consumables, commissions, expenses and petty cash, profit & loss, loyalty) delivered.** Auth, self-service onboarding, multi-tenant/branch isolation, roles and permissions, subscriptions and entitlements, settings (business, VAT, branches and hours, team, roles, profile), the first dashboard, and English/Arabic RTL. 133 database security tests, 46 frontend unit tests and 8 Playwright E2E tests (on real Supabase in CI) pass. Live preview: https://erp.salonzoft.com/ See [docs/07-roadmap-and-status.md](docs/07-roadmap-and-status.md).
+> **Status: Phase 1 (SaaS foundation) and Phase 2 (services, employees and shifts, customers, appointments with a no-double-booking guarantee, live calendar) and Phase 3 (POS, VAT invoices, payments, cash drawer, credit notes, packages, memberships, gift vouchers, deposits) and Phase 4 (inventory, purchasing, retail and consumables, commissions, expenses and petty cash, profit & loss, loyalty) and Phase 5 part 1 (public online booking, WhatsApp/SMS/email notifications) delivered.** Auth, self-service onboarding, multi-tenant/branch isolation, roles and permissions, subscriptions and entitlements, settings (business, VAT, branches and hours, team, roles, profile), the first dashboard, and English/Arabic RTL. 145 database security tests, 46 frontend unit tests and 8 Playwright E2E tests (on real Supabase in CI) pass. Live preview: https://erp.salonzoft.com/ See [docs/07-roadmap-and-status.md](docs/07-roadmap-and-status.md).
 
 ## Repository layout
 
@@ -26,7 +26,7 @@ docs/                Architecture, ERD, security and permission matrix, RPC/Edge
 ```bash
 npm install && npm install --prefix apps/web
 
-npm run test:db          # 133 database security tests: RLS, tenant/branch isolation, escalation, plan gating, storage, services/staff/customers
+npm run test:db          # 145 database security tests: RLS, tenant/branch isolation, escalation, plan gating, storage, services/staff/customers
 npm run web:test         # Angular unit tests (Vitest)
 npm run web:build        # production build
 

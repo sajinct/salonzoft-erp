@@ -127,6 +127,7 @@ export type Database = {
           id: string
           idempotency_key: string | null
           notes: string | null
+          public_token: string | null
           source: string
           starts_at: string
           status: string
@@ -146,6 +147,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           notes?: string | null
+          public_token?: string | null
           source?: string
           starts_at: string
           status?: string
@@ -165,6 +167,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           notes?: string | null
+          public_token?: string | null
           source?: string
           starts_at?: string
           status?: string
@@ -2052,6 +2055,137 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_jobs: {
+        Row: {
+          appointment_id: string | null
+          attempts: number
+          body: string | null
+          branch_id: string | null
+          channel: string
+          created_at: string
+          customer_id: string
+          dedupe_key: string
+          event: string
+          id: string
+          language: string
+          last_error: string | null
+          provider: string | null
+          provider_message_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          tenant_id: string
+          to_address: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          attempts?: number
+          body?: string | null
+          branch_id?: string | null
+          channel: string
+          created_at?: string
+          customer_id: string
+          dedupe_key: string
+          event: string
+          id?: string
+          language: string
+          last_error?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id: string
+          to_address?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          attempts?: number
+          body?: string | null
+          branch_id?: string | null
+          channel?: string
+          created_at?: string
+          customer_id?: string
+          dedupe_key?: string
+          event?: string
+          id?: string
+          language?: string
+          last_error?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id?: string
+          to_address?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_jobs_appointment_id_tenant_id_fkey"
+            columns: ["appointment_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "notification_jobs_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      notification_templates: {
+        Row: {
+          body: string
+          channel: string
+          event: string
+          id: string
+          is_active: boolean
+          language: string
+          subject: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          event: string
+          id?: string
+          is_active?: boolean
+          language: string
+          subject?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          event?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          subject?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       package_items: {
         Row: {
           package_id: string
@@ -2449,6 +2583,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      public_booking_attempts: {
+        Row: {
+          client_ip: string | null
+          created_at: string
+          id: number
+          mobile: string | null
+          tenant_id: string
+        }
+        Insert: {
+          client_ip?: string | null
+          created_at?: string
+          id?: never
+          mobile?: string | null
+          tenant_id: string
+        }
+        Update: {
+          client_ip?: string | null
+          created_at?: string
+          id?: never
+          mobile?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_booking_attempts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       purchase_order_items: {
         Row: {
@@ -3354,10 +3520,19 @@ export type Database = {
           loyalty_min_redeem: number
           loyalty_point_value: number
           loyalty_points_per_unit: number
+          notify_email: boolean
+          notify_sms: boolean
+          notify_whatsapp: boolean
+          online_booking_cancel_hours: number
+          online_booking_horizon_days: number
+          online_booking_lead_minutes: number
+          online_booking_note_ar: string | null
+          online_booking_note_en: string | null
           phone_country_code: string
           prices_include_vat: boolean
           receipt_footer_ar: string | null
           receipt_footer_en: string | null
+          reminder_hours_before: number
           show_hijri_dates: boolean
           tenant_id: string
           timezone: string
@@ -3379,10 +3554,19 @@ export type Database = {
           loyalty_min_redeem?: number
           loyalty_point_value?: number
           loyalty_points_per_unit?: number
+          notify_email?: boolean
+          notify_sms?: boolean
+          notify_whatsapp?: boolean
+          online_booking_cancel_hours?: number
+          online_booking_horizon_days?: number
+          online_booking_lead_minutes?: number
+          online_booking_note_ar?: string | null
+          online_booking_note_en?: string | null
           phone_country_code?: string
           prices_include_vat?: boolean
           receipt_footer_ar?: string | null
           receipt_footer_en?: string | null
+          reminder_hours_before?: number
           show_hijri_dates?: boolean
           tenant_id: string
           timezone?: string
@@ -3404,10 +3588,19 @@ export type Database = {
           loyalty_min_redeem?: number
           loyalty_point_value?: number
           loyalty_points_per_unit?: number
+          notify_email?: boolean
+          notify_sms?: boolean
+          notify_whatsapp?: boolean
+          online_booking_cancel_hours?: number
+          online_booking_horizon_days?: number
+          online_booking_lead_minutes?: number
+          online_booking_note_ar?: string | null
+          online_booking_note_en?: string | null
           phone_country_code?: string
           prices_include_vat?: boolean
           receipt_footer_ar?: string | null
           receipt_footer_en?: string | null
+          reminder_hours_before?: number
           show_hijri_dates?: boolean
           tenant_id?: string
           timezone?: string
@@ -3889,6 +4082,15 @@ export type Database = {
           plan_code: string
         }[]
       }
+      get_notification_defaults: {
+        Args: never
+        Returns: {
+          event: string
+          language: string
+          subject: string
+          body: string
+        }[]
+      }
       get_sales_summary: {
         Args: {
           p_tenant: string
@@ -3979,6 +4181,61 @@ export type Database = {
           p_method: string
           p_reference?: string
           p_note?: string
+        }
+        Returns: Json
+      }
+      preview_notification: {
+        Args: {
+          p_tenant: string
+          p_body: string
+        }
+        Returns: string
+      }
+      public_availability: {
+        Args: {
+          p_slug: string
+          p_branch_id: string
+          p_service_ids: string[]
+          p_date: string
+          p_employee_id?: string
+        }
+        Returns: {
+          starts_at: string
+          employee_id: string
+        }[]
+      }
+      public_cancel_booking: {
+        Args: {
+          p_token: string
+        }
+        Returns: undefined
+      }
+      public_create_booking: {
+        Args: {
+          p_slug: string
+          p_branch_id: string
+          p_service_ids: string[]
+          p_employee_id: string
+          p_starts_at: string
+          p_first_name: string
+          p_last_name: string
+          p_mobile: string
+          p_email: string
+          p_notes: string
+          p_consent_reminders: boolean
+          p_idempotency_key: string
+        }
+        Returns: Json
+      }
+      public_get_booking: {
+        Args: {
+          p_token: string
+        }
+        Returns: Json
+      }
+      public_get_salon: {
+        Args: {
+          p_slug: string
         }
         Returns: Json
       }

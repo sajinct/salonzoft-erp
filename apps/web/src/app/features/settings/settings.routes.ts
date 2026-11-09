@@ -19,6 +19,7 @@ const TABS: SettingsTab[] = [
   { path: 'branches', key: 'settings.branches', icon: 'building-2', permissions: ['branches.manage', 'settings.view'] },
   { path: 'team', key: 'settings.team', icon: 'users', permissions: ['team.view', 'team.manage'] },
   { path: 'roles', key: 'settings.roles', icon: 'shield-check', permissions: ['roles.manage', 'team.view'] },
+  { path: 'online', key: 'settings.online', icon: 'calendar-days', permissions: ['settings.manage', 'branches.manage', 'notifications.manage'] },
   { path: 'profile', key: 'settings.profile', icon: 'user-round', permissions: [] },
 ];
 
@@ -77,7 +78,8 @@ export const SETTINGS_ROUTES: Routes = [
             branches: () => import('./branches.page').then((m) => m.BranchesPage),
             team: () => import('./team.page').then((m) => m.TeamPage),
             roles: () => import('./roles.page').then((m) => m.RolesPage),
-          })[t.path as 'business' | 'branches' | 'team' | 'roles'](),
+            online: () => import('./online.page').then((m) => m.OnlineSettingsPage),
+          })[t.path as 'business' | 'branches' | 'team' | 'roles' | 'online'](),
       })),
       { path: 'profile', loadComponent: () => import('./profile.page').then((m) => m.ProfilePage) },
     ],
