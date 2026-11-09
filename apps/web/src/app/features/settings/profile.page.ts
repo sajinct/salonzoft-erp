@@ -84,7 +84,7 @@ export class ProfilePage implements OnInit {
     this.saving.set(true);
     try {
       await this.profiles.save(id, { full_name: v.full_name.trim() || null, phone: v.phone.trim() || null, preferred_language: v.preferred_language });
-      this.i18n.setLang(v.preferred_language);
+      void this.i18n.setLang(v.preferred_language);
       this.toast.success(this.i18n.t('common.saved'));
     } catch (err) {
       this.toast.error(err);

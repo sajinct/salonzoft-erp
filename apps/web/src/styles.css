@@ -136,3 +136,13 @@ textarea.input { @apply h-auto py-2; }
 .cdk-global-overlay-wrapper { display: flex; position: absolute; inset: 0; pointer-events: none; }
 .cdk-overlay-pane { position: absolute; pointer-events: auto; display: flex; max-width: 100%; max-height: 100%; }
 .cdk-dialog-container { outline: none; width: 100%; }
+
+/* Printing (invoices, receipts): only the document, never the app chrome. */
+@media print {
+  sz-app-shell aside, sz-app-shell header, sz-toasts, .no-print { display: none !important; }
+  sz-app-shell > div { padding: 0 !important; }
+  sz-app-shell main { max-width: none !important; padding: 0 !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .card { box-shadow: none !important; border-color: #ddd !important; }
+  @page { margin: 12mm; }
+}

@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import {
   LucideBuilding2, LucideCalendarDays, LucideChartColumn, LucideCheck, LucideChevronDown, LucideChevronRight,
@@ -7,13 +7,16 @@ import {
   LucideMoon, LucidePackage, LucidePencil, LucidePlus, LucideReceipt, LucideScissors, LucideSettings,
   LucideShieldCheck, LucideSparkles, LucideStore, LucideSun, LucideTrash2, LucideTruck, LucideUpload,
   LucideUserRound, LucideUsers, LucideWallet, LucideX, provideLucideConfig, provideLucideIcons,
-  LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
+  LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
 } from '@lucide/angular';
 import { routes } from './app.routes';
+import { I18nService } from './core/i18n/i18n.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    // Load the stored language (Arabic is a lazy chunk) before the first render.
+    provideAppInitializer(() => inject(I18nService).init()),
     provideRouter(routes, withComponentInputBinding(), withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
     provideLucideConfig({ strokeWidth: 1.75 }),
     provideLucideIcons(
@@ -23,7 +26,7 @@ export const appConfig: ApplicationConfig = {
       LucideMoon, LucidePackage, LucidePencil, LucidePlus, LucideReceipt, LucideScissors, LucideSettings,
       LucideShieldCheck, LucideSparkles, LucideStore, LucideSun, LucideTrash2, LucideTruck, LucideUpload,
       LucideUserRound, LucideUsers, LucideWallet, LucideX,
-      LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
+      LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
     ),
   ],
 };

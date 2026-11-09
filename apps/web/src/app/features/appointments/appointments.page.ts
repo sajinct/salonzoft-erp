@@ -1,5 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { LucideDynamicIcon } from '@lucide/angular';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -116,6 +117,7 @@ export class AppointmentsPage {
   private readonly service = inject(AppointmentsService);
   private readonly dialog = inject(Dialog);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   protected readonly px = PX_PER_MIN;
   protected readonly legend = ['booked', 'confirmed', 'checked_in', 'completed', 'cancelled'] as const;
@@ -321,6 +323,7 @@ export class AppointmentsPage {
     };
     this.dialog.open<DetailsResult, DetailsDialogData>(AppointmentDetailsDialog, { data }).closed.subscribe((result) => {
       if (result === 'changed') this.scheduleReload();
+      if (result === 'checkout') void this.router.navigate(['/pos'], { queryParams: { appointment: appointment.id } });
       if (result === 'reschedule') {
         const booking: BookingDialogData = { branchId: d.branch.id, timezone: this.timezone(), date: this.date(), employees: d.employees, appointment };
         this.dialog.open<boolean, BookingDialogData>(BookingDialog, { data: booking }).closed.subscribe((changed) => {

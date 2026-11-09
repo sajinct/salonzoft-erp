@@ -6,7 +6,7 @@
 |---|---|---|
 | **1. SaaS foundation** | Angular app, Supabase integration, migrations, auth, tenants, memberships, roles and permissions, RLS, branches, bilingual layout, entitlement foundation, first dashboard | ✅ **Milestone 1 delivered** (see below) |
 | 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | ✅ **Delivered** (part 1: services, staff, customers · part 2: appointments, availability, calendar, realtime). Week view, resource booking UI and drag-and-drop follow |
-| 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | |
+| 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | 🟡 **Part 1 delivered** (POS, invoices, payments, cash drawer, credit notes, print). Part 2: packages, memberships, vouchers, deposits, PDF, gateway |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | |
 | 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | |
 | 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | |
@@ -103,6 +103,14 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Angular**: `/appointments` day calendar (see 05-frontend), booking and details dialogs, live updates via Supabase Realtime.
 * **Tests**: `npm run test:db` **94 / 94** (14 new); `ng test` **45 / 45** (6 new timezone tests); new `npm run test:concurrency` (12 parallel bookings of one slot ⇒ exactly 1 wins; 8 "any staff" requests ⇒ exactly 2; racing idempotent retries ⇒ one appointment) runs in CI on real Postgres.
 
-### Next milestone: Phase 3 (revenue operations)
+---
 
-POS checkout from a completed appointment, VAT invoices with gap-free numbering and snapshots, split/partial payments, cash sessions, refunds and credit notes. Also pending from Phase 2: week view, resource assignment in booking, drag-and-drop, dashboard "today" card.
+## Phase 3, part 1 report: POS & invoicing (2026-11-09)
+
+* **Migration `0011_pos_invoicing`**: cart = draft invoice priced by the server; gap-free numbers per branch and year allocated at posting from a locked counter; posted invoices, their lines and payments are immutable (triggers, even for the DB owner); credit notes are the only correction and refund money already paid; cash drawer sessions with expected cash and variance.
+* **Angular**: `/pos` (catalogue tiles, cart with staff per line, server totals, custom items, discount / price only with permission, cash drawer), payment dialog (split, cash change), `/invoices` (today's sales, VAT, by method, unpaid), `/invoices/:id` (bilingual tax invoice / credit note, print), checkout straight from an appointment. Arabic dictionary now lazy-loaded: initial bundle 813 kB (was 850).
+* **Tests**: `npm run test:db` **104 / 104** (10 new); `ng test` **46 / 46**.
+
+### Next milestone: Phase 3, part 2
+
+Packages and memberships (guarded redemption), gift vouchers as a payment method, deposits on bookings, bilingual invoice PDF (Edge Function), Oman payment gateway adapter. Earlier backlog: week view, resource booking UI, drag-and-drop, dashboard "today" card.

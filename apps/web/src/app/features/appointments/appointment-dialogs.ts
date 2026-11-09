@@ -361,7 +361,7 @@ export interface DetailsDialogData {
   canManage: boolean;
   myEmployeeIds: string[];
 }
-export type DetailsResult = 'changed' | 'reschedule' | undefined;
+export type DetailsResult = 'changed' | 'reschedule' | 'checkout' | undefined;
 
 @Component({
   selector: 'sz-appointment-details-dialog',
@@ -405,6 +405,9 @@ export type DetailsResult = 'changed' | 'reschedule' | undefined;
           <button type="button" class="btn-secondary" (click)="askReason.set(null)">{{ 'common.back' | t }}</button>
           <button type="button" class="btn-danger" [disabled]="busy()" (click)="apply(target)">{{ 'appointments.action.' + target | tx }}</button>
         } @else {
+          @if (canCheckout()) {
+            <button type="button" class="btn-primary" (click)="ref.close('checkout')"><svg lucideIcon="receipt" [size]="15"></svg>{{ 'pos.checkout' | t }}</button>
+          }
           @if (data.canManage && (a.status === 'booked' || a.status === 'confirmed')) {
             <button type="button" class="btn-secondary" (click)="ref.close('reschedule')"><svg lucideIcon="calendar-days" [size]="15"></svg>{{ 'appointments.reschedule' | t }}</button>
           }
@@ -425,6 +428,9 @@ export class AppointmentDetailsDialog {
   private readonly toast = inject(ToastService);
 
   protected readonly a = this.data.appointment;
+  private readonly ctx = inject(TenantContextService);
+  /** Cashiers can bill any visit that wasn't cancelled (the invoice completes it). */
+  protected readonly canCheckout = computed(() => this.ctx.can('pos.access') && !['cancelled', 'no_show'].includes(this.a.status));
   protected readonly busy = signal(false);
   protected readonly askReason = signal<AppointmentStatus | null>(null);
   protected readonly reason = signal('');

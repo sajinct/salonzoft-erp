@@ -53,6 +53,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/appointments/appointments.page').then((m) => m.AppointmentsPage),
       },
       {
+        path: 'pos',
+        canActivate: [permissionGuard],
+        data: { permissions: ['pos.access'], module: 'pos' },
+        loadComponent: () => import('./features/pos/pos.page').then((m) => m.PosPage),
+      },
+      {
+        path: 'invoices',
+        canActivate: [permissionGuard],
+        data: { permissions: ['pos.access', 'pos.refund', 'pos.cash_session', 'finance.view', 'reports.financial'], module: 'pos' },
+        loadComponent: () => import('./features/pos/invoices.page').then((m) => m.InvoicesPage),
+      },
+      {
+        path: 'invoices/:id',
+        canActivate: [permissionGuard],
+        data: { permissions: ['pos.access', 'pos.refund', 'pos.cash_session', 'finance.view', 'reports.financial'], module: 'pos' },
+        loadComponent: () => import('./features/pos/invoice.page').then((m) => m.InvoicePage),
+      },
+      {
         path: 'services',
         canActivate: [permissionGuard],
         data: { permissions: ['services.view', 'services.manage'], module: 'services' },

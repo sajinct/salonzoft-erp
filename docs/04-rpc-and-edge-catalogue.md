@@ -49,10 +49,14 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 | `update_appointment(appointment, customer, notes)` | DEFINER | 2 | ✅ | |
 | `get_calendar(branch, from, to)` | DEFINER | 2 | ✅ | ≤ 31 days; employees + working ranges + appointments; stylists get only their own; customer mobile only with `customers.view` |
 | `get_appointment_stats(tenant, branch?)` | DEFINER | 2 | ✅ | Today's counts in the tenant timezone |
-| `finalize_invoice(invoice, idempotency_key)` | DEFINER | 3 | ⏳ | Numbering, snapshots, stock, commission, ledger |
-| `record_payment(invoice, method, amount, idempotency_key)` | DEFINER | 3 | ⏳ | Split/partial payments, cash session |
-| `process_refund(invoice, lines, idempotency_key)` | DEFINER | 3 | ⏳ | Credit note + reversal postings |
-| `open_cash_session`, `close_cash_session(session, counted)` | DEFINER | 3 | ⏳ | Variance recorded |
+| `create_invoice_draft(tenant, branch, customer?, appointment?, key?)` | DEFINER | 3 | ✅ | The cart. From an appointment: its customer, services, staff and booked prices; one live invoice per appointment |
+| `save_invoice_draft(invoice, customer, items, notes?)` | DEFINER | 3 | ✅ | Server-side pricing (booked / branch / catalogue price), `pos.discount` for overrides and discounts, per-line VAT (3 dp, half-up) |
+| `finalize_invoice(invoice)` | DEFINER | 3 | ✅ | Gap-free number `INV-{branch}-{year}-000001` from a locked counter, VAT re-check, snapshots, completes the appointment; idempotent. Stock, commission and ledger postings arrive in Phase 4 |
+| `void_invoice_draft(invoice)` | DEFINER | 3 | ✅ | Drafts only (no number used) |
+| `get_invoice(invoice)` · `get_sales_summary(tenant, branch?, from?, to?)` | DEFINER | 3 | ✅ | Document with lines, payments, credit notes · day/period totals, VAT, by method, outstanding |
+| `record_payment(invoice, method, amount, reference?, key?)` | DEFINER | 3 | ✅ | Split / partial; no overpayment; cash needs an open session; idempotent |
+| `create_credit_note(invoice, lines?, reason, refund_method?, key?)` | DEFINER | 3 | ✅ | `pos.refund`; never more than invoiced; refunds money paid beyond what is still owed; `CN-{branch}-{year}-000001` |
+| `open_cash_session(branch, float)`, `close_cash_session(session, counted, notes?)` | DEFINER | 3 | ✅ | One open drawer per branch; expected = float + cash in − cash refunded; variance stored |
 | `redeem_package(customer_package, service, qty, idempotency_key)` | DEFINER | 3 | ⏳ | Guarded decrement |
 | `post_inventory_movement`, `transfer_inventory`, `receive_purchase` | DEFINER | 4 | ⏳ | Ledger + balances |
 | `calculate_commission(period)` | DEFINER | 4 | ⏳ | From immutable invoice lines |

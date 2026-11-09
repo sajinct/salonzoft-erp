@@ -22,19 +22,28 @@ describe('I18nService', () => {
     }
   });
 
-  it('switching to Arabic sets <html lang="ar" dir="rtl"> and persists', () => {
+  it('switching to Arabic sets <html lang="ar" dir="rtl"> and persists', async () => {
     const i18n = TestBed.inject(I18nService);
-    i18n.setLang('ar');
+    await i18n.setLang('ar');
     TestBed.tick();
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.documentElement.lang).toBe('ar');
     expect(localStorage.getItem('sz.lang')).toBe('ar');
     expect(i18n.t('nav.dashboard')).toBe('لوحة التحكم');
 
-    i18n.toggle();
+    await i18n.toggle();
     TestBed.tick();
     expect(document.documentElement.dir).toBe('ltr');
     expect(i18n.t('nav.dashboard')).toBe('Dashboard');
+  });
+
+  it('starts in English and restores a stored Arabic preference on init', async () => {
+    localStorage.setItem('sz.lang', 'ar');
+    const i18n = TestBed.inject(I18nService);
+    expect(i18n.lang()).toBe('en');
+    await i18n.init();
+    expect(i18n.lang()).toBe('ar');
+    expect(i18n.t('nav.dashboard')).toBe('لوحة التحكم');
   });
 
   it('interpolates parameters and leaves unknown ones intact', () => {
@@ -42,19 +51,19 @@ describe('I18nService', () => {
     expect(interpolate('Hi {name}', {})).toBe('Hi {name}');
   });
 
-  it('translates server error codes with sensible fallbacks', () => {
+  it('translates server error codes with sensible fallbacks', async () => {
     const i18n = TestBed.inject(I18nService);
     expect(i18n.error('TENANT_SLUG_TAKEN')).toContain('already taken');
     expect(i18n.error('SOMETHING_NEW', 'Server detail')).toBe('Server detail');
     expect(i18n.error(null)).toBe(en['errors.generic']);
-    i18n.setLang('ar');
+    await i18n.setLang('ar');
     expect(i18n.error('FORBIDDEN')).toBe('ليست لديك صلاحية للقيام بذلك.');
   });
 
-  it('picks the bilingual field for the active language with fallback', () => {
+  it('picks the bilingual field for the active language with fallback', async () => {
     const i18n = TestBed.inject(I18nService);
     expect(i18n.pick('Seeb', 'السيب')).toBe('Seeb');
-    i18n.setLang('ar');
+    await i18n.setLang('ar');
     expect(i18n.pick('Seeb', 'السيب')).toBe('السيب');
     expect(i18n.pick('Seeb', null)).toBe('Seeb');
   });

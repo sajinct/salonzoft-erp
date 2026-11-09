@@ -441,6 +441,62 @@ export type Database = {
           }
         ]
       }
+      cash_sessions: {
+        Row: {
+          branch_id: string
+          closed_at: string | null
+          closed_by: string | null
+          counted_cash: number | null
+          expected_cash: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opened_by: string | null
+          opening_float: number
+          status: string
+          tenant_id: string
+          variance: number | null
+        }
+        Insert: {
+          branch_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          counted_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by?: string | null
+          opening_float?: number
+          status?: string
+          tenant_id: string
+          variance?: number | null
+        }
+        Update: {
+          branch_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          counted_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by?: string | null
+          opening_float?: number
+          status?: string
+          tenant_id?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_sessions_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
       customer_consents: {
         Row: {
           channel: string
@@ -760,6 +816,290 @@ export type Database = {
           }
         ]
       }
+      invoice_items: {
+        Row: {
+          appointment_service_id: string | null
+          description_ar: string | null
+          description_en: string
+          discount_amount: number
+          employee_id: string | null
+          id: string
+          invoice_id: string
+          kind: string
+          list_price: number
+          net_amount: number
+          original_item_id: string | null
+          quantity: number
+          service_id: string | null
+          sort_order: number
+          tenant_id: string
+          total_amount: number
+          unit_price: number
+          vat_amount: number
+          vat_category: string
+          vat_rate: number
+        }
+        Insert: {
+          appointment_service_id?: string | null
+          description_ar?: string | null
+          description_en: string
+          discount_amount?: number
+          employee_id?: string | null
+          id?: string
+          invoice_id: string
+          kind: string
+          list_price: number
+          net_amount?: number
+          original_item_id?: string | null
+          quantity: number
+          service_id?: string | null
+          sort_order?: number
+          tenant_id: string
+          total_amount?: number
+          unit_price: number
+          vat_amount?: number
+          vat_category?: string
+          vat_rate?: number
+        }
+        Update: {
+          appointment_service_id?: string | null
+          description_ar?: string | null
+          description_en?: string
+          discount_amount?: number
+          employee_id?: string | null
+          id?: string
+          invoice_id?: string
+          kind?: string
+          list_price?: number
+          net_amount?: number
+          original_item_id?: string | null
+          quantity?: number
+          service_id?: string | null
+          sort_order?: number
+          tenant_id?: string
+          total_amount?: number
+          unit_price?: number
+          vat_amount?: number
+          vat_category?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_employee_id_tenant_id_fkey"
+            columns: ["employee_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoice_items_service_id_tenant_id_fkey"
+            columns: ["service_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      invoice_sequences: {
+        Row: {
+          branch_id: string
+          next_number: number
+          series: string
+          tenant_id: string
+          year: number
+        }
+        Insert: {
+          branch_id: string
+          next_number?: number
+          series: string
+          tenant_id: string
+          year: number
+        }
+        Update: {
+          branch_id?: string
+          next_number?: number
+          series?: string
+          tenant_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_sequences_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
+      invoices: {
+        Row: {
+          appointment_id: string | null
+          branch_address: string | null
+          branch_id: string
+          branch_name: string | null
+          branch_name_ar: string | null
+          branch_phone: string | null
+          created_at: string
+          created_by: string | null
+          credited_total: number
+          currency_code: string
+          customer_id: string | null
+          customer_mobile: string | null
+          customer_name: string | null
+          discount_total: number
+          footer_ar: string | null
+          footer_en: string | null
+          id: string
+          idempotency_key: string | null
+          issued_at: string | null
+          kind: string
+          notes: string | null
+          number: string | null
+          original_invoice_id: string | null
+          paid_total: number
+          payment_status: string
+          posted_by: string | null
+          prices_include_vat: boolean
+          reason: string | null
+          refunded_total: number
+          seller_legal_name: string | null
+          seller_name: string | null
+          seller_name_ar: string | null
+          sequence_no: number | null
+          status: string
+          subtotal: number
+          tenant_id: string
+          total: number
+          updated_at: string
+          vat_number: string | null
+          vat_registered: boolean
+          vat_total: number
+        }
+        Insert: {
+          appointment_id?: string | null
+          branch_address?: string | null
+          branch_id: string
+          branch_name?: string | null
+          branch_name_ar?: string | null
+          branch_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          credited_total?: number
+          currency_code?: string
+          customer_id?: string | null
+          customer_mobile?: string | null
+          customer_name?: string | null
+          discount_total?: number
+          footer_ar?: string | null
+          footer_en?: string | null
+          id?: string
+          idempotency_key?: string | null
+          issued_at?: string | null
+          kind?: string
+          notes?: string | null
+          number?: string | null
+          original_invoice_id?: string | null
+          paid_total?: number
+          payment_status?: string
+          posted_by?: string | null
+          prices_include_vat?: boolean
+          reason?: string | null
+          refunded_total?: number
+          seller_legal_name?: string | null
+          seller_name?: string | null
+          seller_name_ar?: string | null
+          sequence_no?: number | null
+          status?: string
+          subtotal?: number
+          tenant_id: string
+          total?: number
+          updated_at?: string
+          vat_number?: string | null
+          vat_registered?: boolean
+          vat_total?: number
+        }
+        Update: {
+          appointment_id?: string | null
+          branch_address?: string | null
+          branch_id?: string
+          branch_name?: string | null
+          branch_name_ar?: string | null
+          branch_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          credited_total?: number
+          currency_code?: string
+          customer_id?: string | null
+          customer_mobile?: string | null
+          customer_name?: string | null
+          discount_total?: number
+          footer_ar?: string | null
+          footer_en?: string | null
+          id?: string
+          idempotency_key?: string | null
+          issued_at?: string | null
+          kind?: string
+          notes?: string | null
+          number?: string | null
+          original_invoice_id?: string | null
+          paid_total?: number
+          payment_status?: string
+          posted_by?: string | null
+          prices_include_vat?: boolean
+          reason?: string | null
+          refunded_total?: number
+          seller_legal_name?: string | null
+          seller_name?: string | null
+          seller_name_ar?: string | null
+          sequence_no?: number | null
+          status?: string
+          subtotal?: number
+          tenant_id?: string
+          total?: number
+          updated_at?: string
+          vat_number?: string | null
+          vat_registered?: boolean
+          vat_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_appointment_id_tenant_id_fkey"
+            columns: ["appointment_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoices_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_tenant_id_fkey"
+            columns: ["customer_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "invoices_original_invoice_id_tenant_id_fkey"
+            columns: ["original_invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
       module_entitlements: {
         Row: {
           is_enabled: boolean
@@ -825,6 +1165,73 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          branch_id: string
+          cash_session_id: string | null
+          direction: string
+          id: string
+          idempotency_key: string | null
+          invoice_id: string
+          method: string
+          received_at: string
+          received_by: string | null
+          reference: string | null
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          branch_id: string
+          cash_session_id?: string | null
+          direction?: string
+          id?: string
+          idempotency_key?: string | null
+          invoice_id: string
+          method: string
+          received_at?: string
+          received_by?: string | null
+          reference?: string | null
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string
+          cash_session_id?: string | null
+          direction?: string
+          id?: string
+          idempotency_key?: string | null
+          invoice_id?: string
+          method?: string
+          received_at?: string
+          received_by?: string | null
+          reference?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_branch_id_tenant_id_fkey"
+            columns: ["branch_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "payments_cash_session_id_tenant_id_fkey"
+            columns: ["cash_session_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "cash_sessions"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "payments_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
       }
       permissions: {
         Row: {
@@ -1881,6 +2288,14 @@ export type Database = {
           employee_id: string
         }[]
       }
+      close_cash_session: {
+        Args: {
+          p_session_id: string
+          p_counted_cash: number
+          p_notes?: string
+        }
+        Returns: Json
+      }
       create_appointment: {
         Args: {
           p_tenant: string
@@ -1890,6 +2305,16 @@ export type Database = {
           p_items: Json
           p_notes?: string
           p_source?: string
+          p_idempotency_key?: string
+        }
+        Returns: Json
+      }
+      create_credit_note: {
+        Args: {
+          p_invoice_id: string
+          p_items: Json
+          p_reason: string
+          p_refund_method?: string
           p_idempotency_key?: string
         }
         Returns: Json
@@ -1904,6 +2329,16 @@ export type Database = {
         }
         Returns: Json
       }
+      create_invoice_draft: {
+        Args: {
+          p_tenant: string
+          p_branch_id: string
+          p_customer_id?: string
+          p_appointment_id?: string
+          p_idempotency_key?: string
+        }
+        Returns: Json
+      }
       create_tenant: {
         Args: {
           p_name: string
@@ -1912,6 +2347,12 @@ export type Database = {
           p_branch_name?: string
           p_default_language?: string
           p_idempotency_key?: string
+        }
+        Returns: Json
+      }
+      finalize_invoice: {
+        Args: {
+          p_invoice_id: string
         }
         Returns: Json
       }
@@ -1957,6 +2398,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_invoice: {
+        Args: {
+          p_invoice_id: string
+        }
+        Returns: Json
+      }
       get_my_tenants: {
         Args: never
         Returns: {
@@ -1970,6 +2417,15 @@ export type Database = {
           trial_ends_at: string
           plan_code: string
         }[]
+      }
+      get_sales_summary: {
+        Args: {
+          p_tenant: string
+          p_branch_id?: string
+          p_from?: string
+          p_to?: string
+        }
+        Returns: Json
       }
       get_tenant_context: {
         Args: {
@@ -2010,6 +2466,23 @@ export type Database = {
           branch_ids: string[]
         }[]
       }
+      open_cash_session: {
+        Args: {
+          p_branch_id: string
+          p_opening_float: number
+        }
+        Returns: string
+      }
+      record_payment: {
+        Args: {
+          p_invoice_id: string
+          p_method: string
+          p_amount: number
+          p_reference?: string
+          p_idempotency_key?: string
+        }
+        Returns: Json
+      }
       reschedule_appointment: {
         Args: {
           p_appointment_id: string
@@ -2036,6 +2509,15 @@ export type Database = {
           p_hours?: Json
         }
         Returns: string
+      }
+      save_invoice_draft: {
+        Args: {
+          p_invoice_id: string
+          p_customer_id: string
+          p_items: Json
+          p_notes?: string
+        }
+        Returns: Json
       }
       search_customers: {
         Args: {
@@ -2105,6 +2587,12 @@ export type Database = {
           p_all_branches: boolean
           p_branch_ids: string[]
           p_job_title?: string
+        }
+        Returns: undefined
+      }
+      void_invoice_draft: {
+        Args: {
+          p_invoice_id: string
         }
         Returns: undefined
       }

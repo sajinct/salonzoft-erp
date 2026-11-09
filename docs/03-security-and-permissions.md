@@ -115,6 +115,8 @@ A branch the caller can't see is reported as `INVALID_BRANCH`, never as "exists 
 | Tenant isolation for services, staff, schedules, customers, consents, notes | ✅ Phase 2 | `07_services_staff`, `08_customers` |
 | Branch-restricted managers can't change prices, assignments or shifts of other branches | ✅ Phase 2 | `07_services_staff` |
 | Sensitive (allergy/medical) notes hidden without `customers.sensitive` | ✅ Phase 2 | `08_customers` |
+| Prices are decided by the server; overrides and discounts need `pos.discount`; refunds need `pos.refund`; drawers need `pos.cash_session` | ✅ Phase 3 | `10_pos_invoicing` |
+| Posted invoices and payments are immutable even for the database owner (triggers); numbering is gap-free | ✅ Phase 3 | `10_pos_invoicing` |
 | Tenant A cannot access Tenant B (read/insert/update/delete/RPC, all 14 tenant tables) | ✅ Phase 1 | `02_tenant_isolation` |
 | Staff cannot access unauthorized branches | ✅ Phase 1 | `04_team_roles_branches` |
 | Subscription restrictions cannot be bypassed | ✅ Phase 1 | `05_subscription_gating` |
