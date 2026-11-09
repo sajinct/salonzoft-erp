@@ -59,7 +59,9 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 | `open_cash_session(branch, float)`, `close_cash_session(session, counted, notes?)` | DEFINER | 3 | ✅ | One open drawer per branch; expected = float + cash in − cash refunded; variance stored |
 | Package redemption (a service line with `customer_package_id`) | DEFINER | 3 | ✅ | Checked when saved, guarded decrement in `finalize_invoice`; reversed by credit notes |
 | `get_customer_wallet(customer)` · `lookup_voucher(tenant, code)` · `set_package_items(package, items)` | DEFINER | 3 | ✅ | Packages with balances, membership, vouchers & deposits · voucher status at the till · atomic package contents (`packages.manage`) |
-| `post_inventory_movement`, `transfer_inventory`, `receive_purchase` | DEFINER | 4 | ⏳ | Ledger + balances |
+| `adjust_stock(branch, items, note?)` · `transfer_stock(from, to, items, note?)` | DEFINER | 4 | ✅ | Counts / opening stock (`inventory.manage`); transfers at source average cost, both branches must be accessible |
+| `save_purchase_order`, `submit_purchase_order` (gap-free `PO-…`), `cancel_purchase_order`, `receive_purchase_order(order, lines, ref?, note?, key?)` | DEFINER | 4 | ✅ | `purchases.manage`; partial receipts, no over-receipt, weighted average cost, idempotent |
+| `set_service_product_usage(service, items)` · `get_stock(branch)` | DEFINER | 4 | ✅ | Consumables per service (deducted at checkout, never blocking) · stock with value and low-stock flag |
 | `calculate_commission(period)` | DEFINER | 4 | ⏳ | From immutable invoice lines |
 | `award_loyalty_points`, `redeem_loyalty_points` | DEFINER | 4 | ⏳ | |
 | `get_sales_report(tenant, from, to, branch?)` and other reports | INVOKER | 4–6 | ⏳ | Permission-gated |

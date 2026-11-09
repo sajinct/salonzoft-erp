@@ -7,7 +7,7 @@ import {
   LucideMoon, LucidePackage, LucidePencil, LucidePlus, LucideReceipt, LucideScissors, LucideSettings,
   LucideShieldCheck, LucideSparkles, LucideStore, LucideSun, LucideTrash2, LucideTruck, LucideUpload,
   LucideUserRound, LucideUsers, LucideWallet, LucideX, provideLucideConfig, provideLucideIcons,
-  LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
+  LucideClipboardList, LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
 } from '@lucide/angular';
 import { routes } from './app.routes';
 import { I18nService } from './core/i18n/i18n.service';
@@ -26,7 +26,7 @@ export const appConfig: ApplicationConfig = {
       LucideMoon, LucidePackage, LucidePencil, LucidePlus, LucideReceipt, LucideScissors, LucideSettings,
       LucideShieldCheck, LucideSparkles, LucideStore, LucideSun, LucideTrash2, LucideTruck, LucideUpload,
       LucideUserRound, LucideUsers, LucideWallet, LucideX,
-      LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
+      LucideClipboardList, LucidePrinter, LucideChevronLeft, LucideArrowLeft, LucideFolderPlus, LucideKeyRound, LucidePhone, LucidePin, LucideSearch, LucideUserPlus, LucideUserX,
     ),
   ],
 };

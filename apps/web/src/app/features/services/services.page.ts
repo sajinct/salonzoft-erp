@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/ui';
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
+import { InventoryService, Product } from '../inventory/data/inventory.service';
 import { BranchPriceInput, Service, ServiceCategory, ServiceInput, ServicePrice, ServicesService } from './data/services.service';
 
 const MONEY = /^\d{1,9}(\.\d{1,3})?$/;
@@ -108,6 +109,8 @@ export interface ServiceDialogData {
   categories: ServiceCategory[];
   prices: ServicePrice[];
   defaultCategoryId: string | null;
+  /** Consumable products, for 'products used per service'. */
+  consumables: Product[];
 }
 
 interface BranchPriceRow {
@@ -187,6 +190,26 @@ interface BranchPriceRow {
           </div>
         </form>
 
+        @if (data.consumables.length > 0) {
+          <section>
+            <h3 class="font-semibold">{{ 'services.productsUsed' | t }}</h3>
+            <p class="hint mb-3">{{ 'services.productsUsedHint' | t }}</p>
+            <ul class="space-y-2">
+              @for (u of usage(); track $index; let i = $index) {
+                <li class="flex items-center gap-2">
+                  <select class="input h-9 flex-1" [value]="u.product_id" (change)="setUsage(i, 'product_id', $any($event.target).value)" [attr.aria-label]="'inventory.product' | t">
+                    <option value="">—</option>
+                    @for (p of data.consumables; track p.id) { <option [value]="p.id">{{ i18n.pick(p.name_en, p.name_ar) }} ({{ p.unit }})</option> }
+                  </select>
+                  <input class="input num h-9 w-24" inputmode="decimal" dir="ltr" [value]="u.quantity" (input)="setUsage(i, 'quantity', $any($event.target).value)" [attr.aria-label]="'pos.quantity' | t" />
+                  <button type="button" class="btn-icon h-8 w-8" (click)="removeUsage(i)" [attr.aria-label]="'common.remove' | t"><svg lucideIcon="trash-2" [size]="14"></svg></button>
+                </li>
+              }
+            </ul>
+            <button type="button" class="btn-ghost btn-sm mt-2" (click)="addUsage()"><svg lucideIcon="plus" [size]="14"></svg>{{ 'services.addProduct' | t }}</button>
+          </section>
+        }
+
         @if (branchRows().length > 1) {
           <section>
             <h3 class="font-semibold">{{ 'services.branchPrices' | t }}</h3>
@@ -260,6 +283,32 @@ export class ServiceDialog {
     }),
   );
 
+  private readonly inventory = inject(InventoryService);
+  private usageLoaded = false;
+  protected readonly usage = signal<{ product_id: string; quantity: string }[]>([]);
+
+  constructor() {
+    if (this.s && this.data.consumables.length > 0) {
+      this.inventory.usage(this.s.id).then(
+        (rows) => {
+          this.usage.set(rows.map((r) => ({ product_id: r.product_id, quantity: String(r.quantity) })));
+          this.usageLoaded = true;
+        },
+        () => undefined,
+      );
+    }
+  }
+
+  protected addUsage(): void {
+    this.usage.update((u) => [...u, { product_id: '', quantity: '1' }]);
+  }
+  protected removeUsage(i: number): void {
+    this.usage.update((u) => u.filter((_, j) => j !== i));
+  }
+  protected setUsage(i: number, field: 'product_id' | 'quantity', value: string): void {
+    this.usage.update((u) => u.map((row, j) => (j === i ? { ...row, [field]: value } : row)));
+  }
+
   protected setBranch(index: number, field: 'price' | 'is_available', event: Event): void {
     const el = event.target as HTMLInputElement;
     const value = field === 'price' ? el.value.trim() : el.checked;
@@ -296,6 +345,10 @@ export class ServiceDialog {
     this.saving.set(true);
     try {
       const saved = this.s ? await this.service.updateService(this.s.id, input) : await this.service.createService(tenantId, input);
+      if (this.data.consumables.length > 0 && (this.usageLoaded || this.usage().some((u) => u.product_id))) {
+        const items = this.usage().filter((u) => u.product_id && Number(u.quantity) > 0).map((u) => ({ product_id: u.product_id, quantity: Number(u.quantity) }));
+        await this.inventory.setUsage(saved.id, items);
+      }
       if (this.branchRows().length > 1) {
         const rows: BranchPriceInput[] = this.branchRows().map((r) => ({ branch_id: r.branch_id, price: r.price || null, is_available: r.is_available }));
         await this.service.setBranchPrices(saved.id, rows);
@@ -407,6 +460,8 @@ export class ServicesPage implements OnInit {
   protected readonly categories = signal<ServiceCategory[]>([]);
   protected readonly services = signal<Service[]>([]);
   protected readonly prices = signal<ServicePrice[]>([]);
+  protected readonly consumables = signal<Product[]>([]);
+  private readonly inventory = inject(InventoryService);
   protected readonly category = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly showInactive = signal(false);
@@ -435,6 +490,9 @@ export class ServicesPage implements OnInit {
       this.categories.set(data.categories);
       this.services.set(data.services);
       this.prices.set(data.prices);
+      if (this.ctx.can('inventory.manage') || this.ctx.can('services.manage')) {
+        this.inventory.products(tenantId).then((ps) => this.consumables.set(ps.filter((p) => p.is_active && p.kind !== 'retail')), () => undefined);
+      }
       if (this.category() && !data.categories.some((c) => c.id === this.category())) this.category.set(null);
     } catch (err) {
       this.toast.error(err);
@@ -463,7 +521,7 @@ export class ServicesPage implements OnInit {
   }
 
   openService(service: Service | null): void {
-    const data: ServiceDialogData = { service, categories: this.categories(), prices: this.prices(), defaultCategoryId: this.category() };
+    const data: ServiceDialogData = { service, categories: this.categories(), prices: this.prices(), defaultCategoryId: this.category(), consumables: this.consumables() };
     this.dialog.open<boolean, ServiceDialogData>(ServiceDialog, { data }).closed.subscribe((changed) => {
       if (changed) void this.load();
     });

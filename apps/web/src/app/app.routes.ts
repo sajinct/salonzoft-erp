@@ -71,6 +71,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/pos/invoice.page').then((m) => m.InvoicePage),
       },
       {
+        path: 'inventory',
+        canActivate: [permissionGuard],
+        data: { permissions: ['inventory.view', 'inventory.manage'], module: 'inventory' },
+        loadComponent: () => import('./features/inventory/inventory.page').then((m) => m.InventoryPage),
+      },
+      {
+        path: 'purchases',
+        canActivate: [permissionGuard],
+        data: { permissions: ['purchases.manage'], module: 'purchases' },
+        loadComponent: () => import('./features/inventory/purchases.page').then((m) => m.PurchasesPage),
+      },
+      {
         path: 'packages',
         canActivate: [permissionGuard],
         data: { permissions: ['packages.view', 'packages.manage'], module: 'packages' },

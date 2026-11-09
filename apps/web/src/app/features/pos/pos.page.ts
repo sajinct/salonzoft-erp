@@ -9,6 +9,7 @@ import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
 import { Customer, CustomersService } from '../customers/data/customers.service';
 import { Employee, EmployeesService } from '../employees/data/employees.service';
+import { InventoryService, StockRow } from '../inventory/data/inventory.service';
 import { Membership, Package, PackagesService } from '../packages/data/packages.service';
 import { Service, ServiceCategory, ServicesService } from '../services/data/services.service';
 import { CartLine, CashSession, InvoiceDoc, PosService, Wallet } from './data/pos.service';
@@ -23,13 +24,14 @@ import {
   parseAmount,
 } from './pos-dialogs';
 
-type Tab = 'services' | 'packages' | 'memberships';
+type Tab = 'services' | 'products' | 'packages' | 'memberships';
 
 interface UiLine {
   kind: CartLine['kind'];
   service_id?: string;
   package_id?: string;
   membership_id?: string;
+  product_id?: string;
   customer_package_id: string | null;
   appointment_id: string | null;
   employee_id: string | null;
@@ -108,6 +110,17 @@ const blankLine = (patch: Partial<UiLine> & Pick<UiLine, 'kind' | 'description'>
               </button>
             } @empty {
               <div class="col-span-full card"><sz-state icon="scissors" [heading]="'services.emptyTitle' | t" /></div>
+            }
+          </div>
+        } @else if (tab() === 'products') {
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            @for (p of retail(); track p.product_id) {
+              <button type="button" class="card flex flex-col items-start gap-1 p-3 text-start hover:border-primary disabled:opacity-50" [disabled]="p.quantity <= 0" (click)="addProduct(p)">
+                <span class="line-clamp-2 text-sm font-semibold">{{ i18n.pick(p.name_en, p.name_ar) }}</span>
+                <span class="num text-xs text-muted">{{ p.sale_price | money }} · {{ 'pos.inStock' | t: { n: p.quantity } }}</span>
+              </button>
+            } @empty {
+              <div class="col-span-full card"><sz-state icon="package" [heading]="'inventory.noProducts' | t" /></div>
             }
           </div>
         } @else if (tab() === 'packages') {
@@ -242,6 +255,7 @@ export class PosPage implements OnInit {
   private readonly pos = inject(PosService);
   private readonly servicesApi = inject(ServicesService);
   private readonly packagesApi = inject(PackagesService);
+  private readonly inventoryApi = inject(InventoryService);
   private readonly employeesApi = inject(EmployeesService);
   private readonly customersApi = inject(CustomersService);
   private readonly dialog = inject(Dialog);
@@ -253,6 +267,8 @@ export class PosPage implements OnInit {
   protected readonly categories = signal<ServiceCategory[]>([]);
   protected readonly packages = signal<Package[]>([]);
   protected readonly memberships = signal<Membership[]>([]);
+  protected readonly stock = signal<StockRow[]>([]);
+  protected readonly retail = computed(() => this.stock().filter((p) => p.kind !== 'consumable'));
   protected readonly employees = signal<Employee[]>([]);
   protected readonly tab = signal<Tab>('services');
   protected readonly category = signal<string | null>(null);
@@ -278,6 +294,7 @@ export class PosPage implements OnInit {
   protected readonly activeMemberships = computed(() => this.memberships().filter((m) => m.is_active));
   protected readonly tabs = computed<Tab[]>(() => [
     'services',
+    ...(this.retail().length ? (['products'] as const) : []),
     ...(this.activePackages().length ? (['packages'] as const) : []),
     ...(this.activeMemberships().length ? (['memberships'] as const) : []),
   ]);
@@ -307,12 +324,14 @@ export class PosPage implements OnInit {
     const branchId = this.branchId();
     if (!tenantId || !branchId) return;
     try {
-      const [catalogue, packs, staff, session] = await Promise.all([
+      const [catalogue, packs, staff, session, stock] = await Promise.all([
         this.servicesApi.load(tenantId),
         this.packagesApi.catalogue(tenantId).catch(() => ({ packages: [] as Package[], items: [], memberships: [] as Membership[] })),
         this.employeesApi.list(tenantId).catch(() => ({ employees: [] as Employee[] })),
         this.pos.openSession(branchId),
+        this.inventoryApi.stock(branchId).catch(() => [] as StockRow[]),
       ]);
+      this.stock.set(stock);
       this.services.set(catalogue.services);
       this.categories.set(catalogue.categories);
       this.packages.set(packs.packages);
@@ -378,6 +397,7 @@ export class PosPage implements OnInit {
             service_id: it.service_id ?? undefined,
             package_id: it.package_id ?? undefined,
             membership_id: it.membership_id ?? undefined,
+            product_id: it.product_id ?? undefined,
             customer_package_id: it.customer_package_id,
             appointment_id: it.deposit_appointment_id,
             employee_id: it.employee_id,
@@ -403,7 +423,7 @@ export class PosPage implements OnInit {
   protected canEditPrice(l: UiLine): boolean {
     if (l.customer_package_id || l.kind === 'voucher') return false;
     if (l.kind === 'custom') return true;
-    if (l.kind === 'package' || l.kind === 'membership') return this.canDiscount();
+    if (l.kind === 'package' || l.kind === 'membership' || l.kind === 'product') return this.canDiscount();
     return this.canDiscount() || l.priceType !== 'fixed';
   }
 
@@ -414,6 +434,10 @@ export class PosPage implements OnInit {
 
   protected addService(s: Service): void {
     this.push(blankLine({ kind: 'service', service_id: s.id, description: this.i18n.pick(s.name_en, s.name_ar), priceType: s.price_type }));
+  }
+
+  protected addProduct(p: StockRow): void {
+    this.push(blankLine({ kind: 'product', product_id: p.product_id, description: this.i18n.pick(p.name_en, p.name_ar) }));
   }
 
   protected addPackage(p: Package): void {
@@ -536,6 +560,7 @@ export class PosPage implements OnInit {
         service_id: l.service_id,
         package_id: l.package_id,
         membership_id: l.membership_id,
+        product_id: l.product_id,
         customer_package_id: l.customer_package_id,
         appointment_id: l.appointment_id,
         employee_id: l.employee_id,

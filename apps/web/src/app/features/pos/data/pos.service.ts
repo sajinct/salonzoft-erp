@@ -21,7 +21,8 @@ export interface InvoiceDoc extends InvoiceRow {
 
 /** A cart line as sent to save_invoice_draft. Prices are decided by the server. */
 export interface CartLine {
-  kind: 'service' | 'custom' | 'package' | 'membership' | 'voucher';
+  kind: 'service' | 'custom' | 'package' | 'membership' | 'voucher' | 'product';
+  product_id?: string;
   package_id?: string;
   membership_id?: string;
   /** Service line paid with a session of this customer package. */

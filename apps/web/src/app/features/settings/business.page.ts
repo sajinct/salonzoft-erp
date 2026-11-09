@@ -122,6 +122,7 @@ const DAYS = [0, 1, 2, 3, 4, 5, 6];
           </div>
           <p class="hint">{{ 'business.vatRateHint' | t }}</p>
           <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" formControlName="prices_include_vat" />{{ 'business.pricesIncludeVat' | t }}</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="checkbox" formControlName="allow_negative_stock" />{{ 'business.allowNegativeStock' | t }}</label>
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="field"><label class="label" for="fen">{{ 'business.footerEn' | t }}</label><textarea id="fen" rows="2" class="input" formControlName="receipt_footer_en"></textarea></div>
             <div class="field"><label class="label" for="far">{{ 'business.footerAr' | t }}</label><textarea id="far" rows="2" class="input" formControlName="receipt_footer_ar" dir="rtl" lang="ar"></textarea></div>
@@ -172,6 +173,7 @@ export class BusinessPage implements OnInit {
       vat_number: ['', Validators.pattern(/^[A-Z0-9]{5,20}$/)],
       default_vat_rate: [5, [Validators.required, Validators.min(0), Validators.max(100)]],
       prices_include_vat: [true],
+      allow_negative_stock: [false],
       invoice_prefix: ['INV', [Validators.required, Validators.pattern(/^[A-Z0-9-]{1,10}$/)]],
       receipt_footer_en: [''],
       receipt_footer_ar: [''],
@@ -201,6 +203,7 @@ export class BusinessPage implements OnInit {
           vat_number: settings.vat_number ?? '',
           default_vat_rate: Number(settings.default_vat_rate),
           prices_include_vat: settings.prices_include_vat,
+          allow_negative_stock: settings.allow_negative_stock,
           invoice_prefix: settings.invoice_prefix,
           receipt_footer_en: settings.receipt_footer_en ?? '',
           receipt_footer_ar: settings.receipt_footer_ar ?? '',

@@ -7,7 +7,7 @@
 | **1. SaaS foundation** | Angular app, Supabase integration, migrations, auth, tenants, memberships, roles and permissions, RLS, branches, bilingual layout, entitlement foundation, first dashboard | ✅ **Milestone 1 delivered** (see below) |
 | 2. Core salon operations | Services and pricing, employees, shifts and leave, customers (consent, duplicates, CSV), appointments with GiST no-double-booking, availability engine, calendar, realtime, staff portal, operational dashboard | ✅ **Delivered** (part 1: services, staff, customers · part 2: appointments, availability, calendar, realtime). Week view, resource booking UI and drag-and-drop follow |
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | 🟡 **Parts 1–2 delivered** (POS, invoices, payments, cash drawer, credit notes, print; packages, memberships, gift vouchers, store credit, deposits). Remaining: server PDF, payment gateway |
-| 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | |
+| 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | 🟡 **Part 1 delivered** (inventory, purchasing, retail, consumables). Part 2: commissions, expenses / petty cash, loyalty |
 | 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | |
 | 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | |
 | 7. Production hardening | Security review and pen test, load tests, backup-restore drills, VAT/Fawtara and PDPL review, monitoring, go-live checklist | |
@@ -119,6 +119,14 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Angular**: POS tabs for packages and memberships, gift voucher and deposit, customer wallet with one-tap redemption and credit; voucher payments with suggestions; `/packages` (packages, memberships, voucher lookup); wallet card on customer profiles; "Take deposit" on appointments.
 * **Tests**: `npm run test:db` **114 / 114** (10 new); `ng test` **46 / 46**.
 
+---
+
+## Phase 4, part 1 report: inventory & purchasing (2026-11-09)
+
+* **Migration `0013_inventory_purchasing`**: products (retail / salon use / both), append-only stock ledger with a single row-locked writer, weighted average cost per branch, stock counts and opening stock, transfers between branches, suppliers and purchase orders (gap-free `PO-` numbers, partial receipts, no over-receipt). Retail is sold through POS (`product` lines) and leaves stock when the invoice posts — if two tills sell the last units, the second checkout fails cleanly and uses no number. Credit notes return stock at the cost it left with. Services consume their products automatically (never blocking a checkout; shortfalls show as negative stock).
+* **Angular**: `/inventory` (stock with value and low-stock flags, counts, transfers, products, movement ledger), `/purchases` (orders: draft → send → receive; suppliers), Products tab in POS with stock on hand, "Products used" on services, "allow negative stock" setting.
+* **Tests**: `npm run test:db` **123 / 123** (9 new: weighted average, ledger = balances, concurrency at posting, returns, consumption, transfers, isolation); `ng test` **46 / 46**.
+
 ### Next milestone
 
-Phase 4 (business ERP): inventory ledger and stock for retail items, purchasing, product consumption per service, staff commissions from posted invoices, expenses and petty cash. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.
+Phase 4, part 2: staff commissions from posted invoices, expenses and petty cash, loyalty points. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.
