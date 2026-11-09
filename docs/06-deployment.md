@@ -66,6 +66,16 @@ Messages are queued by the database (`notification_jobs`) and sent by the `notif
    ```
 4. The public booking link in messages uses `app.platform_settings.public_app_url` (default `https://erp.salonzoft.com`).
 
+## Subscription billing (Phase 6)
+
+1. Schedule the billing cycle once per project (plain SQL, no Edge Function needed):
+   ```sql
+   select cron.schedule('billing-cycle', '15 * * * *', 'select public.run_billing_cycle()');
+   ```
+2. In `/admin/settings` (platform administrator) fill in the company name, VAT number and rate, the payment instructions (bank, account name, IBAN) and the number of overdue days before suspension.
+3. Payments are recorded in `/admin/invoices` (**Mark paid**). When a payment gateway is chosen, its webhook (an Edge Function with the service role) calls `billing_apply_gateway_payment(invoice_id, gateway_ref)`, which is idempotent.
+4. More platform admins: `/admin/settings` → Add admin (the person signs up first). Roles: administrator, billing, support.
+
 ## Cloudflare Pages
 
 * Build command: `npm ci --prefix apps/web && npm --prefix apps/web run build -- --configuration production`

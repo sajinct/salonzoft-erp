@@ -20,6 +20,7 @@ const TABS: SettingsTab[] = [
   { path: 'team', key: 'settings.team', icon: 'users', permissions: ['team.view', 'team.manage'] },
   { path: 'roles', key: 'settings.roles', icon: 'shield-check', permissions: ['roles.manage', 'team.view'] },
   { path: 'online', key: 'settings.online', icon: 'calendar-days', permissions: ['settings.manage', 'branches.manage', 'notifications.manage'] },
+  { path: 'billing', key: 'settings.billing', icon: 'credit-card', permissions: ['billing.manage'] },
   { path: 'profile', key: 'settings.profile', icon: 'user-round', permissions: [] },
 ];
 
@@ -79,7 +80,8 @@ export const SETTINGS_ROUTES: Routes = [
             team: () => import('./team.page').then((m) => m.TeamPage),
             roles: () => import('./roles.page').then((m) => m.RolesPage),
             online: () => import('./online.page').then((m) => m.OnlineSettingsPage),
-          })[t.path as 'business' | 'branches' | 'team' | 'roles' | 'online'](),
+            billing: () => import('../billing/billing.page').then((m) => m.BillingPage),
+          })[t.path as 'business' | 'branches' | 'team' | 'roles' | 'online' | 'billing'](),
       })),
       { path: 'profile', loadComponent: () => import('./profile.page').then((m) => m.ProfilePage) },
     ],

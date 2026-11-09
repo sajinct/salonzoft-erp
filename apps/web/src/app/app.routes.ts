@@ -39,6 +39,18 @@ export const routes: Routes = [
   { path: 'feedback/:token', loadComponent: () => import('./features/marketing/public-pages').then((m) => m.FeedbackPage) },
   { path: 'unsubscribe/:token', loadComponent: () => import('./features/marketing/public-pages').then((m) => m.UnsubscribePage) },
 
+  // ---- Platform (no tenant context) ---------------------------------------------
+  {
+    path: 'admin',
+    canActivate: [authGuard], // + platformAdminGuard inside ADMIN_ROUTES
+    loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+  },
+  {
+    path: 'billing/invoices/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/billing/subscription-invoice.page').then((m) => m.SubscriptionInvoicePage),
+  },
+
   // ---- Salon ERP (authenticated + tenant context) --------------------------------
   {
     path: '',

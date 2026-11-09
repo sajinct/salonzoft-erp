@@ -72,6 +72,21 @@ Per-row import errors (in the `import_customers` result, not raised) also use `I
 
 ## Edge Functions
 
+### SaaS billing & super-admin (Phase 6, migration 0017)
+
+| RPC | Kind | Who | Notes |
+|---|---|---|---|
+| `get_billing_overview(tenant)` | DEFINER | billing.manage (kept while not operational) | Subscription, usage vs limits, public plans, invoices, payment instructions |
+| `request_plan_change(tenant, plan, cycle)` | DEFINER | billing.manage | Trial / lapsed: invoice (`new`/`renewal`/`change`). Active upgrade: invoice with pro-rata credit for unused **paid** time. Cheaper plan: scheduled for the period end. `PLAN_NOT_FOUND`, `PLAN_UNCHANGED`, `PLAN_LIMIT_BRANCHES`, `PLAN_LIMIT_EMPLOYEES` |
+| `cancel_pending_change(tenant)`, `set_cancel_at_period_end(tenant, bool)` | DEFINER | billing.manage | Undo an unpaid upgrade / scheduled downgrade; stop or resume renewal (`SUBSCRIPTION_NOT_ACTIVE`) |
+| `get_subscription_invoice(id)` | DEFINER | billing.manage or platform admin | Printable invoice (`/billing/invoices/:id`) |
+| `run_billing_cycle()` | DEFINER | **service role** (pg_cron, daily) | Renewal invoices 7 days ahead (scheduled downgrades apply), `past_due` after the period (still operational), `suspended` after `billing_suspend_after_days`, `cancelled` on request |
+| `billing_apply_gateway_payment(invoice, ref, paid_at)` | DEFINER | **service role** | For the future gateway webhook; idempotent on `ref` |
+| `admin_whoami`, `admin_overview`, `admin_list_tenants`, `admin_get_tenant`, `admin_list_invoices`, `admin_list_plans`, `admin_list_admins`, `admin_get_settings` | DEFINER | any platform role | MRR/ARR, conversion, plan mix, 12-month sign-ups and revenue, activity, expiring trials |
+| `admin_set_tenant_status`, `admin_extend_trial`, `admin_set_module` | DEFINER | admin, support (closing: admin) | Reason required to suspend/close (`REASON_REQUIRED`); trials +1–90 days (`SUBSCRIPTION_NOT_TRIAL`); module override on / off / back to plan |
+| `admin_assign_plan`, `admin_create_invoice`, `admin_record_payment`, `admin_void_invoice` | DEFINER | admin, billing | Paying starts the period at trial end (remaining trial kept) or continues it for renewals; `INVOICE_NOT_OPEN` |
+| `admin_save_plan`, `admin_set_admin`, `admin_save_settings` | DEFINER | admin | Plan edits resync subscribers' entitlements (overrides kept); the trial plan can't be deactivated (`TRIAL_PLAN_REQUIRED`); `USER_NOT_FOUND`, `ADMIN_SELF` |
+
 ### Campaigns & feedback (Phase 5, migration 0016)
 
 | RPC | Kind | Permission | Notes |

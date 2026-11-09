@@ -2670,6 +2670,47 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          data: Json
+          entity_id: string | null
+          entity_type: string | null
+          id: number
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          data?: Json
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: never
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          data?: Json
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: never
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       products: {
         Row: {
           barcode: string | null
@@ -3469,6 +3510,123 @@ export type Database = {
           }
         ]
       }
+      subscription_invoices: {
+        Row: {
+          amount: number
+          billing_cycle: string
+          buyer_legal_name: string | null
+          buyer_name: string
+          buyer_vat_number: string | null
+          created_by: string | null
+          credit: number
+          currency_code: string
+          due_at: string
+          id: string
+          issued_at: string
+          kind: string
+          number: string
+          paid_at: string | null
+          payment_method: string | null
+          payment_ref: string | null
+          period_end: string | null
+          period_start: string | null
+          plan_id: string
+          plan_name_ar: string
+          plan_name_en: string
+          seller_name: string
+          seller_vat_number: string | null
+          status: string
+          subtotal: number
+          tenant_id: string
+          total: number
+          vat_amount: number
+          vat_rate: number
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          amount: number
+          billing_cycle: string
+          buyer_legal_name?: string | null
+          buyer_name: string
+          buyer_vat_number?: string | null
+          created_by?: string | null
+          credit?: number
+          currency_code?: string
+          due_at: string
+          id?: string
+          issued_at?: string
+          kind: string
+          number: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_id: string
+          plan_name_ar: string
+          plan_name_en: string
+          seller_name: string
+          seller_vat_number?: string | null
+          status?: string
+          subtotal: number
+          tenant_id: string
+          total: number
+          vat_amount?: number
+          vat_rate?: number
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          amount?: number
+          billing_cycle?: string
+          buyer_legal_name?: string | null
+          buyer_name?: string
+          buyer_vat_number?: string | null
+          created_by?: string | null
+          credit?: number
+          currency_code?: string
+          due_at?: string
+          id?: string
+          issued_at?: string
+          kind?: string
+          number?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_id?: string
+          plan_name_ar?: string
+          plan_name_en?: string
+          seller_name?: string
+          seller_vat_number?: string | null
+          status?: string
+          subtotal?: number
+          tenant_id?: string
+          total?: number
+          vat_amount?: number
+          vat_rate?: number
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_invoices_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       subscription_plans: {
         Row: {
           code: string
@@ -3820,6 +3978,8 @@ export type Database = {
           external_ref: string | null
           id: string
           plan_id: string
+          scheduled_cycle: string | null
+          scheduled_plan_id: string | null
           status: string
           tenant_id: string
           trial_ends_at: string | null
@@ -3834,6 +3994,8 @@ export type Database = {
           external_ref?: string | null
           id?: string
           plan_id: string
+          scheduled_cycle?: string | null
+          scheduled_plan_id?: string | null
           status: string
           tenant_id: string
           trial_ends_at?: string | null
@@ -3848,6 +4010,8 @@ export type Database = {
           external_ref?: string | null
           id?: string
           plan_id?: string
+          scheduled_cycle?: string | null
+          scheduled_plan_id?: string | null
           status?: string
           tenant_id?: string
           trial_ends_at?: string | null
@@ -3857,6 +4021,13 @@ export type Database = {
           {
             foreignKeyName: "tenant_subscriptions_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_subscriptions_scheduled_plan_id_fkey"
+            columns: ["scheduled_plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
@@ -4090,6 +4261,127 @@ export type Database = {
         }
         Returns: number
       }
+      admin_assign_plan: {
+        Args: {
+          p_tenant: string
+          p_plan_code: string
+          p_cycle: string
+          p_period_end?: string
+        }
+        Returns: undefined
+      }
+      admin_create_invoice: {
+        Args: {
+          p_tenant: string
+          p_plan_code: string
+          p_cycle: string
+          p_kind?: string
+        }
+        Returns: Json
+      }
+      admin_extend_trial: {
+        Args: {
+          p_tenant: string
+          p_days: number
+        }
+        Returns: string
+      }
+      admin_get_settings: {
+        Args: never
+        Returns: Json
+      }
+      admin_get_tenant: {
+        Args: {
+          p_tenant: string
+        }
+        Returns: Json
+      }
+      admin_list_admins: {
+        Args: never
+        Returns: Json
+      }
+      admin_list_invoices: {
+        Args: {
+          p_status?: string
+          p_search?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      admin_list_plans: {
+        Args: never
+        Returns: Json
+      }
+      admin_list_tenants: {
+        Args: {
+          p_search?: string
+          p_filter?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      admin_overview: {
+        Args: never
+        Returns: Json
+      }
+      admin_record_payment: {
+        Args: {
+          p_invoice: string
+          p_method: string
+          p_ref?: string
+          p_paid_at?: string
+        }
+        Returns: Json
+      }
+      admin_save_plan: {
+        Args: {
+          p_plan: Json
+        }
+        Returns: string
+      }
+      admin_save_settings: {
+        Args: {
+          p_settings: Json
+        }
+        Returns: undefined
+      }
+      admin_set_admin: {
+        Args: {
+          p_email: string
+          p_role: string
+        }
+        Returns: undefined
+      }
+      admin_set_module: {
+        Args: {
+          p_tenant: string
+          p_module: string
+          p_enabled: boolean
+          p_valid_until?: string
+        }
+        Returns: undefined
+      }
+      admin_set_tenant_status: {
+        Args: {
+          p_tenant: string
+          p_status: string
+          p_reason?: string
+        }
+        Returns: undefined
+      }
+      admin_void_invoice: {
+        Args: {
+          p_invoice: string
+          p_reason: string
+        }
+        Returns: undefined
+      }
+      admin_whoami: {
+        Args: never
+        Returns: Json
+      }
       calculate_availability: {
         Args: {
           p_branch_id: string
@@ -4109,6 +4401,12 @@ export type Database = {
           p_campaign_id: string
         }
         Returns: number
+      }
+      cancel_pending_change: {
+        Args: {
+          p_tenant: string
+        }
+        Returns: undefined
       }
       cancel_purchase_order: {
         Args: {
@@ -4208,6 +4506,12 @@ export type Database = {
         Args: {
           p_tenant: string
           p_branch_id?: string
+        }
+        Returns: Json
+      }
+      get_billing_overview: {
+        Args: {
+          p_tenant: string
         }
         Returns: Json
       }
@@ -4336,6 +4640,12 @@ export type Database = {
           low: boolean
           sale_price: number
         }[]
+      }
+      get_subscription_invoice: {
+        Args: {
+          p_invoice: string
+        }
+        Returns: Json
       }
       get_tenant_context: {
         Args: {
@@ -4532,6 +4842,14 @@ export type Database = {
         }
         Returns: Json
       }
+      request_plan_change: {
+        Args: {
+          p_tenant: string
+          p_plan_code: string
+          p_cycle?: string
+        }
+        Returns: Json
+      }
       reschedule_appointment: {
         Args: {
           p_appointment_id: string
@@ -4611,6 +4929,13 @@ export type Database = {
           p_hours: Json
         }
         Returns: Database["public"]["Tables"]["branch_working_hours"]["Row"][]
+      }
+      set_cancel_at_period_end: {
+        Args: {
+          p_tenant: string
+          p_cancel: boolean
+        }
+        Returns: undefined
       }
       set_employee_assignments: {
         Args: {

@@ -21,7 +21,7 @@ test('RLS is enabled on every table in public', async () => {
 test('every business table (except catalogues/profiles) has tenant_id NOT NULL', async () => {
   const exempt = new Set([
     'modules', 'permissions', 'subscription_plans', 'plan_modules', 'role_templates',
-    'role_template_permissions', 'platform_admins', 'profiles', 'tenants', 'audit_logs',
+    'role_template_permissions', 'platform_admins', 'profiles', 'tenants', 'audit_logs', 'platform_audit_logs',
   ]);
   const { rows: tables } = await db.query(`
     select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -78,8 +78,8 @@ test('anon can reach no table and no app function', async () => {
   assert.deepEqual(fns, []);
 });
 
-test('notification worker functions are service-role only', async () => {
-  for (const fn of ['claim_notification_jobs', 'complete_notification_job']) {
+test('worker and webhook functions are service-role only', async () => {
+  for (const fn of ['claim_notification_jobs', 'complete_notification_job', 'run_billing_cycle', 'billing_apply_gateway_payment']) {
     const { rows } = await db.query(`
       select has_function_privilege('authenticated', p.oid, 'execute') as auth, has_function_privilege('anon', p.oid, 'execute') as anon
       from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = $1`, [fn]);

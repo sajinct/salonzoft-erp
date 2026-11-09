@@ -115,6 +115,11 @@ import { TenantContextService } from '../core/tenant/tenant-context.service';
               <svg lucideIcon="building-2" [size]="16"></svg> {{ 'shell.switchBusiness' | t }}
             </a>
           }
+          @if (ctx.context()?.is_platform_admin) {
+            <a cdkMenuItem routerLink="/admin" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-surface-2">
+              <svg lucideIcon="shield-check" [size]="16"></svg> {{ 'shell.platformAdmin' | t }}
+            </a>
+          }
           <button cdkMenuItem type="button" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-danger hover:bg-danger-soft" (click)="signOut()">
             <svg lucideIcon="log-out" [size]="16"></svg> {{ 'shell.signOut' | t }}
           </button>
@@ -123,7 +128,15 @@ import { TenantContextService } from '../core/tenant/tenant-context.service';
 
       @if (ctx.context(); as c) {
         @if (!c.operational) {
-          <div class="border-b border-danger/20 bg-danger-soft px-6 py-2 text-sm text-danger">{{ 'shell.notOperational' | t }}</div>
+          <div class="border-b border-danger/20 bg-danger-soft px-6 py-2 text-sm text-danger">
+            {{ 'shell.notOperational' | t }}
+            @if (ctx.can('billing.manage')) { <a routerLink="/settings/billing" class="ms-2 font-semibold underline">{{ 'shell.goToBilling' | t }}</a> }
+          </div>
+        } @else if (c.subscription?.status === 'past_due') {
+          <div class="border-b border-warning/30 bg-warning-soft px-6 py-2 text-sm text-ink">
+            {{ 'shell.pastDueBanner' | t }}
+            @if (ctx.can('billing.manage')) { <a routerLink="/settings/billing" class="ms-2 font-semibold underline">{{ 'shell.goToBilling' | t }}</a> }
+          </div>
         } @else if (trialDaysLeft() !== null) {
           <div class="border-b border-accent/20 bg-accent-soft px-6 py-2 text-sm text-ink">
             {{ 'shell.trialBanner' | t: { days: trialDaysLeft(), plan: i18n.pick(c.subscription?.plan_name_en, c.subscription?.plan_name_ar) } }}

@@ -9,7 +9,7 @@
 | 3. Revenue operations | POS, VAT invoices (numbering, snapshots), payments (split/partial/deposits), cash sessions, refunds and credit notes, packages, memberships, gift vouchers, invoice PDFs, payment adapter | 🟡 **Parts 1–2 delivered** (POS, invoices, payments, cash drawer, credit notes, print; packages, memberships, gift vouchers, store credit, deposits). Remaining: server PDF, payment gateway |
 | 4. Business ERP | Inventory ledger, purchasing, consumables, commissions, expenses and petty cash, loyalty | ✅ **Delivered** (part 1: inventory, purchasing, retail, consumables · part 2: commissions, expenses & petty cash, P&L, loyalty) |
 | 5. Customer engagement | Public booking portal, WhatsApp/SMS/email, notification queue, campaigns, feedback | ✅ **Delivered** |
-| 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | |
+| 6. SaaS commercialisation | Super-admin, subscription checkout and webhooks, plan changes, tenant billing, platform analytics, advanced reports and exports | 🟡 **Part 1 delivered** (super-admin console, subscription invoices, plan changes, renewals and dunning, platform analytics). Part 2: advanced reports and exports; gateway webhook once a provider is chosen |
 | 7. Production hardening | Security review and pen test, load tests, backup-restore drills, VAT/Fawtara and PDPL review, monitoring, go-live checklist | |
 
 ---
@@ -150,6 +150,12 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Angular**: `/marketing` (campaigns and feedback tabs), public `/feedback/:token` and `/unsubscribe/:token`, feedback settings and template in Settings → Online booking & messages.
 * **Tests**: `npm run test:db` **153 / 153** (8 new); `ng test` **46 / 46**.
 
+## Phase 6, part 1 report: super-admin & subscription billing (2026-11-09)
+
+* **Migration `0017_platform_billing`**: subscription invoices (gap-free `SZ-YYYY-#####`, VAT from platform settings, seller/buyer snapshots, one unpaid invoice per salon); plan changes (pro-rata credited upgrades, scheduled downgrades, limits checked); billing cycle for pg_cron (renewal invoices, past-due grace, suspension, cancellation); service-role gateway entry point; super-admin RPCs with admin / billing / support roles and a platform audit log.
+* **Angular**: `/admin` console (overview, businesses, business detail, invoices, plans, settings & admins), Settings → Plan & billing, printable subscription invoice, overdue banner, admin link in the user menu. English is now lazy-loaded like Arabic (initial bundle 798 kB).
+* **Tests**: `npm run test:db` **158 / 158** (5 new); `ng test` **46 / 46**.
+
 ### Next milestone
 
-Phase 6: SaaS commercialisation (super-admin console, plan billing, platform reports). Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.
+Phase 6, part 2: advanced reports and exports (sales, services, staff, customers, VAT; CSV/Excel). Payment gateway webhook once the provider is chosen. Pending from Phase 3: server-side bilingual invoice PDF (Edge Function) and an Oman payment gateway adapter (provider to be chosen). Backlog: calendar week view, resource booking UI, drag-and-drop, dashboard "today" card.

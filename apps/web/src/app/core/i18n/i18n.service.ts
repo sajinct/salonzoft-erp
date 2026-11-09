@@ -1,19 +1,25 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, Pipe, PipeTransform, computed, effect, inject, signal } from '@angular/core';
-import { Dictionary, TranslationKey, en, enErrors } from './en';
+import type { Dictionary, TranslationKey } from './en';
 
 export type Lang = 'en' | 'ar';
 export type TranslationParams = Record<string, string | number | null | undefined>;
 
 const STORAGE_KEY = 'sz.lang';
-// English is bundled (it is also the fallback); Arabic is a lazy chunk so the
-// initial download stays small. It is loaded before first render when the
-// stored preference is Arabic (see `init`), so there is no flash of English.
-const dictionaries: Partial<Record<Lang, Dictionary>> = { en };
-const errorDictionaries: Partial<Record<Lang, Record<string, string>>> = { en: enErrors };
+// Both dictionaries are lazy chunks so the initial download stays small and does
+// not grow with every new screen. `init` (an app initializer) loads English — the
+// fallback — and the stored language before the first render, so nothing flashes.
+const dictionaries: Partial<Record<Lang, Dictionary>> = {};
+const errorDictionaries: Partial<Record<Lang, Record<string, string>>> = {};
 
 async function loadDictionary(lang: Lang): Promise<void> {
   if (dictionaries[lang]) return;
+  if (lang === 'en') {
+    const m = await import('./en');
+    dictionaries.en = m.en;
+    errorDictionaries.en = m.enErrors;
+    return;
+  }
   const m = await import('./ar');
   dictionaries.ar = m.ar;
   errorDictionaries.ar = m.arErrors;
@@ -66,6 +72,7 @@ export class I18nService {
 
   /** App initializer: restore the stored language before the first render. */
   async init(): Promise<void> {
+    await loadDictionary('en');
     await this.setLang(readStoredLang());
   }
 
@@ -84,20 +91,20 @@ export class I18nService {
   }
 
   t(key: TranslationKey, params?: TranslationParams): string {
-    return interpolate(dictionaries[this.lang()]?.[key] ?? en[key] ?? key, params);
+    return interpolate(dictionaries[this.lang()]?.[key] ?? dictionaries.en?.[key] ?? key, params);
   }
 
   /** For keys built at runtime (e.g. `businessType.${type}`). Falls back to the key. */
   tx(key: string, params?: TranslationParams): string {
-    const dict = (dictionaries[this.lang()] ?? en) as Record<string, string>;
-    const fallback = en as Record<string, string>;
+    const dict = (dictionaries[this.lang()] ?? {}) as Record<string, string>;
+    const fallback = (dictionaries.en ?? {}) as Record<string, string>;
     return interpolate(dict[key] ?? fallback[key] ?? key, params);
   }
 
   /** Translate a server error code (see app.raise in SQL). */
   error(code: string | null | undefined, fallback?: string | null): string {
     if (code) {
-      const message = errorDictionaries[this.lang()]?.[code] ?? enErrors[code];
+      const message = errorDictionaries[this.lang()]?.[code] ?? errorDictionaries.en?.[code];
       if (message) return message;
     }
     return fallback || this.t('errors.generic');
