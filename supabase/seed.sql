@@ -1,0 +1,14 @@
+-- Salonzoft local seed.
+--
+-- Reference data (modules, permissions, plans, role templates) lives in the
+-- migrations because every environment needs it.
+--
+-- Demo users/businesses are created through the real auth + RPC flow, not by
+-- writing into auth.* tables directly (which is brittle across GoTrue versions):
+--
+--   npx supabase start
+--   SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SECRET_KEY=<service_role/secret key from `supabase status`> \
+--     npm run db:seed:demo
+--
+-- See scripts/seed-demo.mjs.
+select 1;

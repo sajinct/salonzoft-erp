@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+/* Dark mode is class-driven (ThemeService toggles `.dark` on <html>). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens — premium beauty/wellness palette (plum + rose gold on warm
+   neutrals). Components use the semantic tokens below, never raw hex.
+   --------------------------------------------------------------------------- */
+:root {
+  --sz-bg: #faf8f6;
+  --sz-surface: #ffffff;
+  --sz-surface-2: #f4f0ec;
+  --sz-border: #e7e0da;
+  --sz-text: #231a22;
+  --sz-muted: #6f6470;
+  --sz-primary: #6b2d5c;
+  --sz-primary-hover: #57234b;
+  --sz-primary-soft: #f3e8f0;
+  --sz-on-primary: #ffffff;
+  --sz-accent: #b9805f;
+  --sz-accent-soft: #f6ece5;
+  --sz-success: #1f7a4d;
+  --sz-success-soft: #e5f4ec;
+  --sz-warning: #a45d00;
+  --sz-warning-soft: #fdf1df;
+  --sz-danger: #b42335;
+  --sz-danger-soft: #fbe7ea;
+  --sz-ring: color-mix(in srgb, var(--sz-primary) 35%, transparent);
+  color-scheme: light;
+}
+
+.dark {
+  --sz-bg: #141016;
+  --sz-surface: #1d1720;
+  --sz-surface-2: #261f2a;
+  --sz-border: #362d3a;
+  --sz-text: #f2ecf1;
+  --sz-muted: #a99caa;
+  --sz-primary: #d58fc1;
+  --sz-primary-hover: #e3a8d1;
+  --sz-primary-soft: #3a2337;
+  --sz-on-primary: #1d1720;
+  --sz-accent: #d9a585;
+  --sz-accent-soft: #3a2a22;
+  --sz-success: #5cc795;
+  --sz-success-soft: #173126;
+  --sz-warning: #f0b55a;
+  --sz-warning-soft: #3a2a12;
+  --sz-danger: #f07c8b;
+  --sz-danger-soft: #3d1a20;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--sz-bg);
+  --color-surface: var(--sz-surface);
+  --color-surface-2: var(--sz-surface-2);
+  --color-line: var(--sz-border);
+  --color-ink: var(--sz-text);
+  --color-muted: var(--sz-muted);
+  --color-primary: var(--sz-primary);
+  --color-primary-hover: var(--sz-primary-hover);
+  --color-primary-soft: var(--sz-primary-soft);
+  --color-on-primary: var(--sz-on-primary);
+  --color-accent: var(--sz-accent);
+  --color-accent-soft: var(--sz-accent-soft);
+  --color-success: var(--sz-success);
+  --color-success-soft: var(--sz-success-soft);
+  --color-warning: var(--sz-warning);
+  --color-warning-soft: var(--sz-warning-soft);
+  --color-danger: var(--sz-danger);
+  --color-danger-soft: var(--sz-danger-soft);
+  --font-sans: "Plus Jakarta Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-display: "Fraunces", "IBM Plex Sans Arabic", Georgia, serif;
+}
+
+html[lang="ar"] {
+  --font-sans: "IBM Plex Sans Arabic", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: "IBM Plex Sans Arabic", system-ui, sans-serif;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--sz-bg);
+  color: var(--sz-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers (money, counts) always render LTR with tabular digits, even in RTL. */
+.num { font-variant-numeric: tabular-nums; unicode-bidi: plaintext; }
+
+:focus-visible { outline: 2px solid var(--sz-primary); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------------------
+   Reusable component classes
+   --------------------------------------------------------------------------- */
+@utility card { @apply rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(35,26,34,0.04)]; }
+
+@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none; }
+@utility btn-primary { @apply btn bg-primary text-on-primary hover:bg-primary-hover; }
+@utility btn-secondary { @apply btn border border-line bg-surface text-ink hover:bg-surface-2; }
+@utility btn-ghost { @apply btn text-ink hover:bg-surface-2; }
+@utility btn-danger { @apply btn bg-danger text-white hover:opacity-90; }
+@utility btn-sm { @apply h-8 px-3 text-xs rounded-lg; }
+@utility btn-icon { @apply btn h-9 w-9 px-0 text-muted hover:bg-surface-2 hover:text-ink; }
+
+@utility field { @apply flex flex-col gap-1.5; }
+@utility label { @apply text-sm font-medium text-ink; }
+@utility hint { @apply text-xs text-muted; }
+@utility error-text { @apply text-xs text-danger; }
+@utility input { @apply h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-4 focus:ring-[var(--sz-ring)] disabled:bg-surface-2 disabled:text-muted; }
+textarea.input { @apply h-auto py-2; }
+.input.ng-invalid.ng-touched { @apply border-danger; }
+@utility checkbox { @apply h-4 w-4 rounded accent-[var(--sz-primary)] cursor-pointer; }
+
+@utility badge { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold; }
+@utility badge-primary { @apply badge bg-primary-soft text-primary; }
+@utility badge-success { @apply badge bg-success-soft text-success; }
+@utility badge-warning { @apply badge bg-warning-soft text-warning; }
+@utility badge-danger { @apply badge bg-danger-soft text-danger; }
+@utility badge-muted { @apply badge bg-surface-2 text-muted; }
+
+@utility table { @apply w-full text-sm; }
+.table th { @apply px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-muted; }
+.table td { @apply px-4 py-3 border-t border-line align-middle; }
+
+@utility page-title { @apply font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-ink; }
+
+/* CDK overlay (dialogs) */
+.cdk-overlay-container { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
+.cdk-overlay-backdrop { position: absolute; inset: 0; pointer-events: auto; transition: opacity 150ms; }
+.cdk-overlay-dark-backdrop { background: rgba(20, 16, 22, 0.45); }
+.cdk-global-overlay-wrapper { display: flex; position: absolute; inset: 0; pointer-events: none; }
+.cdk-overlay-pane { position: absolute; pointer-events: auto; display: flex; max-width: 100%; max-height: 100%; }
+.cdk-dialog-container { outline: none; width: 100%; }

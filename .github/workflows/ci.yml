@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    name: Database security tests (PGlite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run test:db
+      - name: Generated DB types are up to date
+        run: |
+          npm run db:types:offline
+          git diff --exit-code apps/web/src/app/core/supabase/database.types.ts
+
+  web:
+    name: Angular unit tests + production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/web/package-lock.json }
+      - run: npm ci
+      - run: npx ng test --watch=false
+      - run: npx ng build --configuration production
+
+  e2e:
+    name: E2E against local Supabase (Docker)
+    runs-on: ubuntu-latest
+    needs: [database, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - run: npm ci && npm ci --prefix apps/web
+      - name: Start Supabase (applies migrations + seed)
+        run: supabase start
+      - name: Lint PL/pgSQL on real Postgres (plpgsql_check)
+        run: supabase db lint --level warning
+      - name: Point the web app at the local stack
+        run: |
+          KEY=$(supabase status -o env | grep -E '^(PUBLISHABLE_KEY|ANON_KEY)=' | head -1 | cut -d= -f2- | tr -d '"')
+          sed -i "s|REPLACE_WITH_LOCAL_PUBLISHABLE_KEY|$KEY|" apps/web/src/environments/environment.ts
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright-report, path: playwright-report }
+
+  deploy-staging:
+    name: Deploy to staging
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.STAGING_PROJECT_REF != ''
+    runs-on: ubuntu-latest
+    needs: [e2e]
+    environment: staging
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Apply database migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ vars.STAGING_PROJECT_REF }}"
+          supabase db push
+      - name: Build Angular (staging)
+        run: |
+          npm ci --prefix apps/web
+          sed -i "s|https://YOUR-STAGING-PROJECT-REF.supabase.co|${{ vars.STAGING_SUPABASE_URL }}|; s|REPLACE_WITH_STAGING_PUBLISHABLE_KEY|${{ vars.STAGING_PUBLISHABLE_KEY }}|" apps/web/src/environments/environment.staging.ts
+          npm --prefix apps/web run build -- --configuration staging
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/web/dist/web/browser --project-name=salonzoft-staging --branch=main

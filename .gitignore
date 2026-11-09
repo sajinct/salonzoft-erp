@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Portable toolchain (see README "Node version")
+.tools/
+
+# Build output
+dist/
+.angular/
+apps/web/dist/
+apps/web/.angular/
+
+# Test artefacts
+playwright-report/
+test-results/
+coverage/
+
+# Supabase local state & secrets
+supabase/.branches/
+supabase/.temp/
+supabase/functions/.env
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+Thumbs.db
+*.log
