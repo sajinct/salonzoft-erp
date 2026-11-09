@@ -1,4 +1,7 @@
-import { Routes } from '@angular/router';
+import { Type } from '@angular/core';
+import { CanActivateFn, Routes } from '@angular/router';
+
+type LoadComponent = () => Promise<Type<unknown>>;
 import { authGuard, guestGuard, landingGuard, permissionGuard, tenantGuard } from './core/guards/guards';
 
 export const routes: Routes = [
@@ -15,15 +18,20 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'login' },
     ],
   },
-  {
-    path: '',
+  // NOTE: each page gets an explicit path. Grouping them under an empty-path
+  // layout route would make that route match "/" with an empty outlet and
+  // shadow the app shell below (regression-tested in app.routes.spec.ts).
+  ...(
+    [
+      { path: 'accept-invite', guards: [], page: () => import('./features/auth/accept-invite.page').then((m) => m.AcceptInvitePage) },
+      { path: 'onboarding', guards: [authGuard], page: () => import('./features/onboarding/create-business.page').then((m) => m.CreateBusinessPage) },
+      { path: 'select-tenant', guards: [authGuard], page: () => import('./features/onboarding/select-tenant.page').then((m) => m.SelectTenantPage) },
+    ] satisfies { path: string; guards: CanActivateFn[]; page: LoadComponent }[]
+  ).map(({ path, guards, page }) => ({
+    path,
     loadComponent: () => import('./layouts/auth-layout').then((m) => m.AuthLayout),
-    children: [
-      { path: 'accept-invite', loadComponent: () => import('./features/auth/accept-invite.page').then((m) => m.AcceptInvitePage) },
-      { path: 'onboarding', canActivate: [authGuard], loadComponent: () => import('./features/onboarding/create-business.page').then((m) => m.CreateBusinessPage) },
-      { path: 'select-tenant', canActivate: [authGuard], loadComponent: () => import('./features/onboarding/select-tenant.page').then((m) => m.SelectTenantPage) },
-    ],
-  },
+    children: [{ path: '', canActivate: guards, loadComponent: page }],
+  })),
 
   // ---- Salon ERP (authenticated + tenant context) --------------------------------
   {
