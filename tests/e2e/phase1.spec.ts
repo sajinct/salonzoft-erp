@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 // End-to-end Phase 1 journey against a LOCAL Supabase stack + `ng serve`.
 // Requires: `npx supabase start` (Docker) and the publishable key in
@@ -9,6 +9,15 @@ const email = `owner-${unique}@example.test`;
 const password = 'Salonzoft2026!';
 
 test.describe.configure({ mode: 'serial' });
+
+/** Sign in and wait until the app has finished routing to the dashboard. */
+async function signIn(page: Page): Promise<void> {
+  await page.goto('/auth/login');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+}
 
 test('sign up → create business → dashboard', async ({ page }) => {
   await page.goto('/auth/signup');
@@ -28,11 +37,7 @@ test('sign up → create business → dashboard', async ({ page }) => {
 });
 
 test('Arabic switches the layout to RTL', async ({ page }) => {
-  await page.goto('/auth/login');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await signIn(page);
 
   await page.getByRole('button', { name: 'Language' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -41,10 +46,7 @@ test('Arabic switches the layout to RTL', async ({ page }) => {
 });
 
 test('owner can invite a team member and gets a one-time link', async ({ page }) => {
-  await page.goto('/auth/login');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await signIn(page);
   await page.goto('/settings/team');
   await page.getByRole('button', { name: 'Invite member' }).click();
   await page.getByLabel('Email address').fill(`staff-${unique}@example.test`);
