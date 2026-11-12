@@ -1,39 +1,58 @@
-import { DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { ChangeDetectionStrategy, Component, Injectable, inject, signal } from '@angular/core';
 import { LucideDynamicIcon } from '@lucide/angular';
+import { firstValueFrom } from 'rxjs';
 import { I18nService, TranslatePipe } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
-import { TenantContextService } from '../../core/tenant/tenant-context.service';
-import {
-  SERVICE_COLUMNS, ServiceImportResult, ServiceImportRow, downloadCsv, downloadXlsx, readTableFile, serviceTemplateTable, tableToServiceRows,
-} from './data/services-io';
-import { ServicesService } from './data/services.service';
+import { ImportResult, Table, downloadCsv, downloadXlsx, readTableFile } from './table-io';
 
-const MAX_IMPORT_ROWS = 1000;
+/** Everything page-specific about an import. Texts arrive translated. */
+export interface ImportDialogData<R extends ImportResult = ImportResult> {
+  title: string;
+  hint: string;
+  rules: string;
+  chooseFile: string;
+  /** Recognised column headers, shown as a list. */
+  headers: string[];
+  /** Example file offered for download. */
+  template: Table;
+  templateName: string;
+  sheet: string;
+  widths: number[];
+  maxRows: number;
+  /** Sheet → rows for the RPC. Throws IMPORT_NO_NAME_COLUMN when the required column is missing. */
+  parse(table: unknown[][]): { rows: Record<string, string>[]; columns: string[] };
+  run(rows: Record<string, string>[], dryRun: boolean): Promise<R>;
+  /** Summary lines for a result ("3 services will be added", …). */
+  summary(result: R): { text: string; muted?: boolean }[];
+}
+
 const KNOWN_ERRORS = ['IMPORT_NO_NAME_COLUMN', 'IMPORT_OLD_EXCEL'];
+/** Row errors whose server detail names the offending value ("Unknown branch …"). */
+const NAMED_ERRORS = ['INVALID_BRANCH', 'INVALID_SERVICE', 'INVALID_DATE'];
 
-/** Import services from CSV or Excel: choose file → check (dry run) → import. Closes with true when something was saved. */
+/** Import from CSV or Excel: choose file → check (dry run) → import. Closes with true when something was saved. */
 @Component({
-  selector: 'sz-services-import-dialog',
+  selector: 'sz-import-dialog',
   imports: [TranslatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card flex max-h-[92vh] w-[min(40rem,calc(100vw-2rem))] flex-col" role="dialog" aria-modal="true">
       <header class="flex items-center justify-between border-b border-line px-6 py-4">
-        <h2 class="text-lg font-semibold">{{ 'services.import' | t }}</h2>
+        <h2 class="text-lg font-semibold">{{ data.title }}</h2>
         <button type="button" class="btn-icon" (click)="ref.close(imported)" [attr.aria-label]="'common.close' | t"><svg lucideIcon="x" [size]="18"></svg></button>
       </header>
       <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5 text-sm">
-        <p class="text-muted">{{ 'services.importHint' | t }}</p>
+        <p class="text-muted">{{ data.hint }}</p>
         <code class="block overflow-x-auto whitespace-nowrap rounded-xl bg-surface-2 px-3 py-2 text-xs" dir="ltr">{{ headers }}</code>
-        <p class="text-muted">{{ 'services.importRules' | t }}</p>
+        <p class="text-muted">{{ data.rules }}</p>
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-muted">{{ 'services.template' | t }}</span>
+          <span class="text-muted">{{ 'import.template' | t }}</span>
           <button type="button" class="btn-secondary btn-sm" (click)="template('xlsx')"><svg lucideIcon="download" [size]="14"></svg>Excel</button>
           <button type="button" class="btn-secondary btn-sm" (click)="template('csv')"><svg lucideIcon="download" [size]="14"></svg>CSV</button>
         </div>
         <input type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="block w-full text-sm"
-               (change)="pick($event)" [attr.aria-label]="'services.chooseFile' | t" />
+               (change)="pick($event)" [attr.aria-label]="data.chooseFile" />
 
         @if (rows().length > 0) {
           <p><strong>{{ rows().length }}</strong> {{ 'customers.rowsFound' | t }} · <span class="text-muted" dir="ltr">{{ columns().join(', ') }}</span></p>
@@ -43,15 +62,13 @@ const KNOWN_ERRORS = ['IMPORT_NO_NAME_COLUMN', 'IMPORT_OLD_EXCEL'];
           <div class="rounded-xl border border-line p-4">
             <p class="font-semibold">{{ (r.dry_run ? 'customers.dryRunResult' : 'customers.importResult') | t }}</p>
             <ul class="mt-2 space-y-1">
-              <li class="text-success">{{ (r.dry_run ? 'services.willAdd' : 'services.added') | t: { n: r.inserted } }}</li>
-              <li class="text-success">{{ (r.dry_run ? 'services.willUpdate' : 'services.updated') | t: { n: r.updated } }}</li>
-              @if (r.categories_created > 0) { <li class="text-muted">{{ 'services.newCategories' | t: { n: r.categories_created } }}</li> }
+              @for (line of data.summary(r); track $index) { <li [class]="line.muted ? 'text-muted' : 'text-success'">{{ line.text }}</li> }
               <li [class.text-danger]="r.errors.length > 0">{{ 'customers.rowErrors' | t: { n: r.errors.length } }}</li>
             </ul>
             @if (r.errors.length > 0) {
               <ul class="mt-3 max-h-40 space-y-1 overflow-y-auto text-xs">
                 @for (e of r.errors.slice(0, 100); track e.row) {
-                  <li><span class="num">{{ 'customers.row' | t: { n: e.row + 1 } }}</span>: {{ i18n.error(e.code, e.detail) }}</li>
+                  <li><span class="num">{{ 'customers.row' | t: { n: e.row + 1 } }}</span>: {{ describe(e) }}</li>
                 }
               </ul>
             }
@@ -68,17 +85,16 @@ const KNOWN_ERRORS = ['IMPORT_NO_NAME_COLUMN', 'IMPORT_OLD_EXCEL'];
     </div>
   `,
 })
-export class ServicesImportDialog {
+export class ImportDialog {
   protected readonly ref = inject<DialogRef<boolean>>(DialogRef);
-  protected readonly i18n = inject(I18nService);
-  private readonly service = inject(ServicesService);
-  private readonly ctx = inject(TenantContextService);
+  protected readonly data = inject<ImportDialogData>(DIALOG_DATA);
+  private readonly i18n = inject(I18nService);
   private readonly toast = inject(ToastService);
 
-  protected readonly headers = SERVICE_COLUMNS.map((c) => c.header).join(', ');
-  protected readonly rows = signal<ServiceImportRow[]>([]);
+  protected readonly headers = this.data.headers.join(', ');
+  protected readonly rows = signal<Record<string, string>[]>([]);
   protected readonly columns = signal<string[]>([]);
-  protected readonly result = signal<ServiceImportResult | null>(null);
+  protected readonly result = signal<ImportResult | null>(null);
   protected readonly busy = signal(false);
   protected imported = false;
 
@@ -88,10 +104,16 @@ export class ServicesImportDialog {
     return !!r && r.dry_run && r.inserted + r.updated > 0 && this.rows().length > 0;
   }
 
+  /** Errors that name the offending value (unknown branch, bad date) show that detail; the rest use the dictionary. */
+  protected describe(e: ImportResult['errors'][number]): string {
+    const named = NAMED_ERRORS.includes(e.code) && !!e.detail && e.detail !== e.code;
+    return named ? e.detail : this.i18n.error(e.code, e.detail);
+  }
+
   protected template(kind: 'csv' | 'xlsx'): void {
-    const table = serviceTemplateTable();
-    if (kind === 'csv') downloadCsv(table, 'services-template.csv');
-    else void downloadXlsx(table, 'services-template.xlsx').catch((err) => this.toast.error(err));
+    const d = this.data;
+    if (kind === 'csv') downloadCsv(d.template, `${d.templateName}.csv`);
+    else void downloadXlsx(d.template, `${d.templateName}.xlsx`, d.sheet, d.widths).catch((err) => this.toast.error(err));
   }
 
   async pick(event: Event): Promise<void> {
@@ -101,8 +123,8 @@ export class ServicesImportDialog {
     this.columns.set([]);
     if (!file) return;
     try {
-      const parsed = tableToServiceRows(await readTableFile(file));
-      if (parsed.rows.length > MAX_IMPORT_ROWS) {
+      const parsed = this.data.parse(await readTableFile(file));
+      if (parsed.rows.length > this.data.maxRows) {
         this.toast.error({ message: 'IMPORT_TOO_LARGE' });
         return;
       }
@@ -115,11 +137,9 @@ export class ServicesImportDialog {
   }
 
   async run(dryRun: boolean): Promise<void> {
-    const tenantId = this.ctx.tenantId();
-    if (!tenantId) return;
     this.busy.set(true);
     try {
-      const result = await this.service.import(tenantId, this.rows(), dryRun);
+      const result = await this.data.run(this.rows(), dryRun);
       this.result.set(result);
       if (!dryRun) {
         this.imported = this.imported || result.inserted + result.updated > 0;
@@ -130,5 +150,16 @@ export class ServicesImportDialog {
     } finally {
       this.busy.set(false);
     }
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class ImportDialogService {
+  private readonly dialog = inject(Dialog);
+
+  /** Resolves true when something was imported. */
+  async open<R extends ImportResult>(data: ImportDialogData<R>): Promise<boolean> {
+    const ref = this.dialog.open<boolean, ImportDialogData>(ImportDialog, { data: data as unknown as ImportDialogData, disableClose: true });
+    return (await firstValueFrom(ref.closed)) === true;
   }
 }

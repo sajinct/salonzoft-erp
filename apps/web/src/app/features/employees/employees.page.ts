@@ -6,9 +6,12 @@ import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18
 import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { PageHeader, StatePanel } from '../../shared/components/ui';
+import { ImportDialogService } from '../../shared/import/import-dialog';
+import { downloadCsv, downloadXlsx } from '../../shared/import/table-io';
 import { LocalDatePipe } from '../../shared/pipes/format.pipes';
 import { TeamMember, TeamService } from '../settings/data/team.service';
 import { Service, ServiceCategory, ServicesService } from '../services/data/services.service';
+import { EMPLOYEE_COLUMNS, EMPLOYEE_WIDTHS, employeeTemplateTable, employeesToTable, tableToEmployeeRows } from './data/employees-io';
 import { Employee, EmployeeAssignments, EmployeeInput, EmployeesService, ShiftInput, StaffLeave } from './data/employees.service';
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6];
@@ -442,7 +445,12 @@ export class EmployeeDialog {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <sz-page-header [heading]="'nav.employees' | t" [subtitle]="'employees.subtitle' | t">
+      @if (employees().length > 0) {
+        <button type="button" class="btn-secondary" (click)="export('xlsx')" [title]="'employees.exportHint' | t"><svg lucideIcon="download" [size]="16"></svg>{{ 'services.exportExcel' | t }}</button>
+        <button type="button" class="btn-secondary" (click)="export('csv')" [title]="'employees.exportHint' | t"><svg lucideIcon="download" [size]="16"></svg>CSV</button>
+      }
       @if (canManage()) {
+        <button type="button" class="btn-secondary" (click)="openImport()"><svg lucideIcon="upload" [size]="16"></svg>{{ 'services.import' | t }}</button>
         <button type="button" class="btn-primary" (click)="open(null)"><svg lucideIcon="user-plus" [size]="16"></svg>{{ 'employees.add' | t }}</button>
       }
     </sz-page-header>
@@ -490,6 +498,7 @@ export class EmployeesPage implements OnInit {
   private readonly ctx = inject(TenantContextService);
   private readonly dialog = inject(Dialog);
   private readonly toast = inject(ToastService);
+  private readonly importDialog = inject(ImportDialogService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly loading = signal(true);
@@ -522,6 +531,47 @@ export class EmployeesPage implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Every employee (not only the filtered list), in the layout the import reads back. */
+  protected async export(kind: 'csv' | 'xlsx'): Promise<void> {
+    const tenantId = this.ctx.tenantId();
+    if (!tenantId) return;
+    try {
+      const { services } = await this.services.load(tenantId);
+      const table = employeesToTable(this.employees(), this.assignments(), this.ctx.branches(), services);
+      const name = `employees-${new Date().toISOString().slice(0, 10)}`;
+      if (kind === 'csv') downloadCsv(table, `${name}.csv`);
+      else await downloadXlsx(table, `${name}.xlsx`, 'Employees', EMPLOYEE_WIDTHS);
+    } catch (err) {
+      this.toast.error(err);
+    }
+  }
+
+  async openImport(): Promise<void> {
+    const tenantId = this.ctx.tenantId();
+    if (!tenantId) return;
+    const t = this.i18n.t.bind(this.i18n);
+    const main = this.ctx.branches().find((b) => b.is_main) ?? this.ctx.branches()[0];
+    const imported = await this.importDialog.open({
+      title: t('employees.import'),
+      hint: t('employees.importHint'),
+      rules: t('employees.importRules', { branches: this.ctx.branches().map((b) => b.code).join(', ') }),
+      chooseFile: t('services.chooseFile'),
+      headers: EMPLOYEE_COLUMNS.map((c) => c.header),
+      template: employeeTemplateTable(main?.code),
+      templateName: 'employees-template',
+      sheet: 'Employees',
+      widths: EMPLOYEE_WIDTHS,
+      maxRows: 1000,
+      parse: tableToEmployeeRows,
+      run: (rows, dryRun) => this.service.import(tenantId, rows, dryRun),
+      summary: (r) => [
+        { text: t(r.dry_run ? 'employees.willAdd' : 'employees.added', { n: r.inserted }) },
+        { text: t(r.dry_run ? 'employees.willUpdate' : 'employees.updated', { n: r.updated }) },
+      ],
+    });
+    if (imported) void this.load();
   }
 
   protected initials(e: Employee): string {

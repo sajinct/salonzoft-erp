@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Tables, TablesInsert } from '../../../core/supabase/database.types';
 import { unwrap } from '../../../core/supabase/app-error';
 import { SUPABASE } from '../../../core/supabase/supabase.client';
+import type { ImportResult } from '../../../shared/import/table-io';
+import type { EmployeeImportRow } from './employees-io';
 
 export type Employee = Tables<'employees'>;
 export type StaffShift = Tables<'staff_shifts'>;
@@ -53,6 +55,12 @@ export class EmployeesService {
 
   async update(id: string, input: Partial<EmployeeInput>): Promise<Employee> {
     return unwrap(await this.sb.from('employees').update(input).eq('id', id).select('*').single());
+  }
+
+  /** Add or update employees from an imported file; a dry run only validates. */
+  async import(tenantId: string, rows: EmployeeImportRow[], dryRun: boolean): Promise<ImportResult> {
+    const result = unwrap(await this.sb.rpc('import_employees', { p_tenant: tenantId, p_rows: rows as unknown as never, p_dry_run: dryRun }));
+    return result as unknown as ImportResult;
   }
 
   async setAssignments(employeeId: string, branchIds: string[], serviceIds: string[]): Promise<void> {

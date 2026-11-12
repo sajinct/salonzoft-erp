@@ -8,9 +8,10 @@ import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/ui';
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
 import { InventoryService, Product } from '../inventory/data/inventory.service';
-import { downloadCsv, downloadXlsx, servicesToTable } from './data/services-io';
+import { ImportDialogService } from '../../shared/import/import-dialog';
+import { downloadCsv, downloadXlsx } from '../../shared/import/table-io';
+import { SERVICE_COLUMNS, SERVICE_WIDTHS, ServiceImportResult, serviceTemplateTable, servicesToTable, tableToServiceRows } from './data/services-io';
 import { BranchPriceInput, Service, ServiceCategory, ServiceInput, ServicePrice, ServicesService } from './data/services.service';
-import { ServicesImportDialog } from './services-import.dialog';
 
 const MONEY = /^\d{1,9}(\.\d{1,3})?$/;
 
@@ -469,6 +470,7 @@ export class ServicesPage implements OnInit {
   protected readonly prices = signal<ServicePrice[]>([]);
   protected readonly consumables = signal<Product[]>([]);
   private readonly inventory = inject(InventoryService);
+  private readonly importDialog = inject(ImportDialogService);
   protected readonly category = signal<string | null>(null);
   protected readonly query = signal('');
   protected readonly showInactive = signal(false);
@@ -527,16 +529,36 @@ export class ServicesPage implements OnInit {
     const name = `services-${new Date().toISOString().slice(0, 10)}`;
     try {
       if (kind === 'csv') downloadCsv(table, `${name}.csv`);
-      else await downloadXlsx(table, `${name}.xlsx`);
+      else await downloadXlsx(table, `${name}.xlsx`, 'Services', SERVICE_WIDTHS);
     } catch (err) {
       this.toast.error(err);
     }
   }
 
-  openImport(): void {
-    this.dialog.open<boolean>(ServicesImportDialog, { disableClose: true }).closed.subscribe((imported) => {
-      if (imported) void this.load();
+  async openImport(): Promise<void> {
+    const tenantId = this.ctx.tenantId();
+    if (!tenantId) return;
+    const t = this.i18n.t.bind(this.i18n);
+    const imported = await this.importDialog.open<ServiceImportResult>({
+      title: t('services.import'),
+      hint: t('services.importHint'),
+      rules: t('services.importRules'),
+      chooseFile: t('services.chooseFile'),
+      headers: SERVICE_COLUMNS.map((c) => c.header),
+      template: serviceTemplateTable(),
+      templateName: 'services-template',
+      sheet: 'Services',
+      widths: SERVICE_WIDTHS,
+      maxRows: 1000,
+      parse: tableToServiceRows,
+      run: (rows, dryRun) => this.service.import(tenantId, rows, dryRun),
+      summary: (r) => [
+        { text: t(r.dry_run ? 'services.willAdd' : 'services.added', { n: r.inserted }) },
+        { text: t(r.dry_run ? 'services.willUpdate' : 'services.updated', { n: r.updated }) },
+        ...(r.categories_created > 0 ? [{ text: t('services.newCategories', { n: r.categories_created }), muted: true }] : []),
+      ],
     });
+    if (imported) void this.load();
   }
 
   openCategory(category: ServiceCategory | null): void {

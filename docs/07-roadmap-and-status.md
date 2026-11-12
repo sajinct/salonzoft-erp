@@ -176,6 +176,13 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Not covered**: branch price overrides, colours and consumables are not in the file.
 * **Tests**: `20_import_services` (database), `services-io.spec.ts`.
 
+## Employee import / export (2026-11-12)
+
+* **Migration `0022_import_employees`**: `import_employees(tenant, rows, dry_run)` — adds or updates employees (matched by code, else by English name); `branches` (codes or names) and `services` (codes, names or `all`) are lists separated by `;` that replace the current assignment when given; a new employee of a single-branch salon gets that branch. `employees.manage`, SECURITY INVOKER, plan employee limit applies, at most 1000 rows.
+* **Frontend**: Employees → *Import* and *Export Excel* / *CSV*. The file handling (`shared/import/table-io.ts`) and the import dialog (`shared/import/import-dialog.ts`) are now shared with the services page.
+* **Not covered**: shifts, leave, colours and the link to a login are not in the file.
+* **Tests**: `21_import_employees` (database), `employees-io.spec.ts`.
+
 ## Phase 6, part 2 report: reports & exports (2026-11-09)
 
 * **Migration `0018_reports`**: `run_report` with nine reports (daily sales, VAT summary, invoice register, payments, services, staff performance, retail products, appointments, top customers), permission- and branch-scoped, credit notes subtracted; audited exports.

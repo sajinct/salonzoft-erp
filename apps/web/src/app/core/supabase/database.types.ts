@@ -4743,6 +4743,14 @@ export type Database = {
         }
         Returns: Json
       }
+      import_employees: {
+        Args: {
+          p_tenant: string
+          p_rows: Json
+          p_dry_run?: boolean
+        }
+        Returns: Json
+      }
       import_services: {
         Args: {
           p_tenant: string
