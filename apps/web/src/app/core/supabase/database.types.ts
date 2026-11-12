@@ -3877,8 +3877,14 @@ export type Database = {
           online_booking_note_en: string | null
           phone_country_code: string
           prices_include_vat: boolean
+          receipt_auto_print: boolean
           receipt_footer_ar: string | null
           receipt_footer_en: string | null
+          receipt_header_ar: string | null
+          receipt_header_en: string | null
+          receipt_language: string
+          receipt_paper: string
+          receipt_show_logo: boolean
           reminder_hours_before: number
           show_hijri_dates: boolean
           tenant_id: string
@@ -3913,8 +3919,14 @@ export type Database = {
           online_booking_note_en?: string | null
           phone_country_code?: string
           prices_include_vat?: boolean
+          receipt_auto_print?: boolean
           receipt_footer_ar?: string | null
           receipt_footer_en?: string | null
+          receipt_header_ar?: string | null
+          receipt_header_en?: string | null
+          receipt_language?: string
+          receipt_paper?: string
+          receipt_show_logo?: boolean
           reminder_hours_before?: number
           show_hijri_dates?: boolean
           tenant_id: string
@@ -3949,8 +3961,14 @@ export type Database = {
           online_booking_note_en?: string | null
           phone_country_code?: string
           prices_include_vat?: boolean
+          receipt_auto_print?: boolean
           receipt_footer_ar?: string | null
           receipt_footer_en?: string | null
+          receipt_header_ar?: string | null
+          receipt_header_en?: string | null
+          receipt_language?: string
+          receipt_paper?: string
+          receipt_show_logo?: boolean
           reminder_hours_before?: number
           show_hijri_dates?: boolean
           tenant_id?: string

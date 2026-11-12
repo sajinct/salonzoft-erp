@@ -129,10 +129,6 @@ const DAYS = [0, 1, 2, 3, 4, 5, 6];
             <div class="field"><label class="label" for="lpv">{{ 'business.loyaltyPointValue' | t }}</label><input id="lpv" class="input num" type="number" min="0" step="0.001" dir="ltr" formControlName="loyalty_point_value" /></div>
             <div class="field"><label class="label" for="lmin">{{ 'business.loyaltyMinRedeem' | t }}</label><input id="lmin" class="input num" type="number" min="0" dir="ltr" formControlName="loyalty_min_redeem" /></div>
           </div>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div class="field"><label class="label" for="fen">{{ 'business.footerEn' | t }}</label><textarea id="fen" rows="2" class="input" formControlName="receipt_footer_en"></textarea></div>
-            <div class="field"><label class="label" for="far">{{ 'business.footerAr' | t }}</label><textarea id="far" rows="2" class="input" formControlName="receipt_footer_ar" dir="rtl" lang="ar"></textarea></div>
-          </div>
         </fieldset>
 
         @if (canEdit()) {
@@ -185,8 +181,6 @@ export class BusinessPage implements OnInit {
       loyalty_point_value: [0.01],
       loyalty_min_redeem: [100],
       invoice_prefix: ['INV', [Validators.required, Validators.pattern(/^[A-Z0-9-]{1,10}$/)]],
-      receipt_footer_en: [''],
-      receipt_footer_ar: [''],
     }),
   });
 
@@ -219,8 +213,6 @@ export class BusinessPage implements OnInit {
           loyalty_point_value: settings.loyalty_point_value,
           loyalty_min_redeem: settings.loyalty_min_redeem,
           invoice_prefix: settings.invoice_prefix,
-          receipt_footer_en: settings.receipt_footer_en ?? '',
-          receipt_footer_ar: settings.receipt_footer_ar ?? '',
         },
       });
       this.weekend.set([...settings.weekend_days]);
@@ -252,8 +244,6 @@ export class BusinessPage implements OnInit {
         {
           ...settings,
           vat_number: settings.vat_number.trim().toUpperCase() || null,
-          receipt_footer_en: settings.receipt_footer_en.trim() || null,
-          receipt_footer_ar: settings.receipt_footer_ar.trim() || null,
           weekend_days: this.weekend(),
         },
       );

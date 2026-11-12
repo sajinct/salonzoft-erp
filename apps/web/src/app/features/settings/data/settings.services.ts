@@ -41,6 +41,10 @@ export class BusinessSettingsService {
     unwrap(await this.sb.from('tenant_settings').update(settings).eq('tenant_id', tenantId).select('tenant_id').single());
   }
 
+  async saveSettings(tenantId: string, settings: TenantSettingsUpdate): Promise<void> {
+    unwrap(await this.sb.from('tenant_settings').update(settings).eq('tenant_id', tenantId).select('tenant_id').single());
+  }
+
   /** Upload to tenants/{tenantId}/branding/… (Storage RLS checks settings.manage). */
   async uploadLogo(tenantId: string, file: File): Promise<string> {
     if (!ALLOWED_LOGO_TYPES.includes(file.type)) throw new AppError('INVALID_FILE_TYPE', 'PNG, JPG or WebP only');

@@ -16,6 +16,7 @@ interface SettingsTab {
 
 const TABS: SettingsTab[] = [
   { path: 'business', key: 'settings.business', icon: 'store', permissions: ['settings.view', 'settings.manage'] },
+  { path: 'receipt', key: 'settings.receipt', icon: 'printer', permissions: ['settings.view', 'settings.manage'] },
   { path: 'branches', key: 'settings.branches', icon: 'building-2', permissions: ['branches.manage', 'settings.view'] },
   { path: 'team', key: 'settings.team', icon: 'users', permissions: ['team.view', 'team.manage'] },
   { path: 'roles', key: 'settings.roles', icon: 'shield-check', permissions: ['roles.manage', 'team.view'] },
@@ -76,12 +77,13 @@ export const SETTINGS_ROUTES: Routes = [
         loadComponent: () =>
           ({
             business: () => import('./business.page').then((m) => m.BusinessPage),
+            receipt: () => import('./receipt.page').then((m) => m.ReceiptSettingsPage),
             branches: () => import('./branches.page').then((m) => m.BranchesPage),
             team: () => import('./team.page').then((m) => m.TeamPage),
             roles: () => import('./roles.page').then((m) => m.RolesPage),
             online: () => import('./online.page').then((m) => m.OnlineSettingsPage),
             billing: () => import('../billing/billing.page').then((m) => m.BillingPage),
-          })[t.path as 'business' | 'branches' | 'team' | 'roles' | 'online' | 'billing'](),
+          })[t.path as 'business' | 'receipt' | 'branches' | 'team' | 'roles' | 'online' | 'billing'](),
       })),
       { path: 'profile', loadComponent: () => import('./profile.page').then((m) => m.ProfilePage) },
     ],

@@ -162,6 +162,13 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Console**: *Add business* on `/admin/tenants`; on a business page *Edit*, a Users table (add user, edit roles/branches, suspend/reactivate, make owner, send password reset) and pending invitations with revoke.
 * **Tests**: `18_admin_tenant_management`.
 
+## Invoice template & direct printing (2026-11-12)
+
+* **Migration `0020_receipt_template`**: per-salon print template on `tenant_settings` — paper (`a4`, `80mm`, `58mm`), language (`en`, `ar`, `both`), header text in each language, logo on/off, auto print after payment. The footer columns already existed.
+* **Frontend**: Settings → *Invoice template* with a live preview and test print. One renderer (`shared/receipt/receipt.ts`) builds the escaped HTML for both the preview and printing; invoices print from an off-screen frame (no preview page) from the invoice page and, when enabled, automatically after a POS payment.
+* **No print dialog**: browsers only skip it when started with `--kiosk-printing` (Chrome / Edge); the settings page shows the shortcut to create on the cashier PC. Raw ESC/POS printing (cash-drawer kick, cutter control) is not built.
+* **Tests**: `19_receipt_template` (database), `receipt.spec.ts` (renderer).
+
 ## Phase 6, part 2 report: reports & exports (2026-11-09)
 
 * **Migration `0018_reports`**: `run_report` with nine reports (daily sales, VAT summary, invoice register, payments, services, staff performance, retail products, appointments, top customers), permission- and branch-scoped, credit notes subtracted; audited exports.

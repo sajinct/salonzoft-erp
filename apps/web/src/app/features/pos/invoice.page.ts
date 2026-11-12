@@ -6,6 +6,7 @@ import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18
 import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { StatePanel } from '../../shared/components/ui';
+import { ReceiptPrintService } from '../../shared/receipt/receipt-print.service';
 import { LocalDatePipe, MoneyPipe } from '../../shared/pipes/format.pipes';
 import { InvoiceDoc, PosService, WalletVoucher } from './data/pos.service';
 import { CreditNoteDialog, PaymentDialog, PaymentDialogData } from './pos-dialogs';
@@ -137,6 +138,7 @@ export class InvoicePage {
   private readonly dialog = inject(Dialog);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly receipts = inject(ReceiptPrintService);
 
   protected readonly doc = signal<InvoiceDoc | null>(null);
   protected readonly loading = signal(true);
@@ -174,8 +176,15 @@ export class InvoicePage {
     return d.vat_registered ? 'فاتورة ضريبية' : 'فاتورة';
   }
 
-  protected print(): void {
-    window.print();
+  /** Prints with the salon's receipt template (Settings → Invoice template). */
+  protected async print(): Promise<void> {
+    const d = this.doc();
+    if (!d) return;
+    try {
+      await this.receipts.print(d);
+    } catch (err) {
+      this.toast.error(err);
+    }
   }
 
   async takePayment(d: InvoiceDoc): Promise<void> {

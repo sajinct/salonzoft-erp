@@ -5,6 +5,7 @@ import { LucideDynamicIcon } from '@lucide/angular';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
+import { ReceiptPrintService } from '../../shared/receipt/receipt-print.service';
 import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/ui';
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
 import { Customer, CustomersService } from '../customers/data/customers.service';
@@ -272,6 +273,7 @@ export class PosPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
+  private readonly receipts = inject(ReceiptPrintService);
 
   protected readonly services = signal<Service[]>([]);
   protected readonly categories = signal<ServiceCategory[]>([]);
@@ -603,6 +605,16 @@ export class PosPage implements OnInit {
     }
   }
 
+  /** Direct print after checkout: re-read the invoice so the receipt shows the payments just taken. */
+  private async printReceipt(invoiceId: string): Promise<void> {
+    try {
+      const doc = await this.pos.get(invoiceId);
+      if (doc.paid_total > 0) await this.receipts.print(doc); // nothing to hand over if no payment was taken
+    } catch (err) {
+      this.toast.error(err);
+    }
+  }
+
   async charge(): Promise<void> {
     this.busy.set(true);
     try {
@@ -612,6 +624,7 @@ export class PosPage implements OnInit {
       const posted = await this.pos.finalize(id);
       const data: PaymentDialogData = { doc: posted, vouchers: this.wallet()?.vouchers ?? [] };
       this.dialog.open<boolean, PaymentDialogData>(PaymentDialog, { data, disableClose: true }).closed.subscribe(() => {
+        if (this.receipts.autoPrint()) void this.printReceipt(posted.id);
         void this.router.navigate(['/invoices', posted.id]);
       });
     } catch (err) {
