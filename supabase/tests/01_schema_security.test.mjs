@@ -52,7 +52,7 @@ test('SECURITY DEFINER functions pin search_path', async () => {
 // becomes callable by anon fails the build.
 const ANON_ALLOWED = [
   'public_availability', 'public_cancel_booking', 'public_create_booking', 'public_get_booking', 'public_get_feedback',
-  'public_get_salon', 'public_submit_feedback', 'public_unsubscribe',
+  'public_get_invoice', 'public_get_salon', 'public_submit_feedback', 'public_unsubscribe',
 ];
 
 test('anon can execute only the public_* booking functions', async () => {

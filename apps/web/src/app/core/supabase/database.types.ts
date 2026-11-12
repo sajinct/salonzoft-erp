@@ -1870,6 +1870,38 @@ export type Database = {
           }
         ]
       }
+      invoice_share_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          invoice_id: string
+          tenant_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          invoice_id: string
+          tenant_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          invoice_id?: string
+          tenant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_share_links_invoice_id_tenant_id_fkey"
+            columns: ["invoice_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "tenant_id"]
+          }
+        ]
+      }
       invoices: {
         Row: {
           appointment_id: string | null
@@ -4584,6 +4616,12 @@ export type Database = {
           score: number
         }[]
       }
+      get_appointment_share: {
+        Args: {
+          p_appointment_id: string
+        }
+        Returns: Json
+      }
       get_appointment_stats: {
         Args: {
           p_tenant: string
@@ -4666,6 +4704,12 @@ export type Database = {
         Returns: Json
       }
       get_invoice: {
+        Args: {
+          p_invoice_id: string
+        }
+        Returns: Json
+      }
+      get_invoice_share: {
         Args: {
           p_invoice_id: string
         }
@@ -4884,6 +4928,12 @@ export type Database = {
         Returns: Json
       }
       public_get_feedback: {
+        Args: {
+          p_token: string
+        }
+        Returns: Json
+      }
+      public_get_invoice: {
         Args: {
           p_token: string
         }

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Tables } from '../../../core/supabase/database.types';
 import { unwrap } from '../../../core/supabase/app-error';
 import { SUPABASE } from '../../../core/supabase/supabase.client';
+import type { ShareInfo } from '../../../shared/whatsapp/whatsapp';
 
 export type InvoiceRow = Tables<'invoices'>;
 export type InvoiceItem = Tables<'invoice_items'>;
@@ -84,6 +85,11 @@ export class PosService {
       }),
     ) as unknown as { invoice_id: string };
     return res.invoice_id;
+  }
+
+  /** The customer's number, a ready message and the private link to this invoice (creates the link on first use). */
+  async share(invoiceId: string): Promise<ShareInfo> {
+    return unwrap(await this.sb.rpc('get_invoice_share', { p_invoice_id: invoiceId })) as unknown as ShareInfo;
   }
 
   async get(invoiceId: string): Promise<InvoiceDoc> {

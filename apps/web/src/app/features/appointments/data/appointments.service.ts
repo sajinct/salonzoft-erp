@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { unwrap } from '../../../core/supabase/app-error';
 import { SUPABASE } from '../../../core/supabase/supabase.client';
+import type { ShareInfo } from '../../../shared/whatsapp/whatsapp';
 
 export type AppointmentStatus = 'booked' | 'confirmed' | 'checked_in' | 'in_service' | 'completed' | 'cancelled' | 'no_show';
 export type Range = [string, string];
@@ -115,6 +116,11 @@ export class AppointmentsService {
       }),
     );
     return res as unknown as { appointment_id: string; replayed: boolean };
+  }
+
+  /** The customer's number and a ready message with the appointment details and their manage link. */
+  async share(appointmentId: string): Promise<ShareInfo> {
+    return unwrap(await this.sb.rpc('get_appointment_share', { p_appointment_id: appointmentId })) as unknown as ShareInfo;
   }
 
   async reschedule(appointmentId: string, startsAt: string, employeeId: string | null): Promise<void> {

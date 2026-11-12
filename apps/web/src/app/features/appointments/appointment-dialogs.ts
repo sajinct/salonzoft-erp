@@ -1,4 +1,5 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { openWhatsApp } from '../../shared/whatsapp/whatsapp';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { LucideDynamicIcon } from '@lucide/angular';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
@@ -390,6 +391,9 @@ export type DetailsResult = 'changed' | 'reschedule' | 'checkout' | 'deposit' | 
           }
         </ul>
         @if (a.notes) { <p><span class="text-muted">{{ 'appointments.notes' | t }}:</span> {{ a.notes }}</p> }
+        <button type="button" class="btn-secondary btn-sm" [disabled]="sending()" (click)="whatsApp()" [title]="'share.whatsAppHint' | t">
+          <svg lucideIcon="message-circle" [size]="15"></svg>{{ 'share.appointmentWhatsApp' | t }}
+        </button>
         @if (a.cancel_reason) { <p><span class="text-muted">{{ 'appointments.reason' | t }}:</span> {{ a.cancel_reason }}</p> }
         <p class="text-xs text-muted">{{ 'appointments.source' | t }}: {{ 'appointments.sourceName.' + a.source | tx }}</p>
 
@@ -437,6 +441,20 @@ export class AppointmentDetailsDialog {
   protected readonly busy = signal(false);
   protected readonly askReason = signal<AppointmentStatus | null>(null);
   protected readonly reason = signal('');
+  protected readonly sending = signal(false);
+
+  /** Opens WhatsApp with the appointment details and the customer's manage link. */
+  protected async whatsApp(): Promise<void> {
+    this.sending.set(true);
+    try {
+      const info = await openWhatsApp(() => this.appointments.share(this.a.id));
+      if (!info.mobile) this.toast.info(this.i18n.t('share.noNumber'));
+    } catch (err) {
+      this.toast.error(err);
+    } finally {
+      this.sending.set(false);
+    }
+  }
 
   /** Front desk: every allowed transition. Stylist: start / complete own work. */
   protected readonly actions = computed(() => {

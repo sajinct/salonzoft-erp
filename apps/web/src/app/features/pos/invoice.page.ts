@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { StatePanel } from '../../shared/components/ui';
 import { ReceiptPrintService } from '../../shared/receipt/receipt-print.service';
+import { openWhatsApp } from '../../shared/whatsapp/whatsapp';
 import { LocalDatePipe, MoneyPipe } from '../../shared/pipes/format.pipes';
 import { InvoiceDoc, PosService, WalletVoucher } from './data/pos.service';
 import { CreditNoteDialog, PaymentDialog, PaymentDialogData } from './pos-dialogs';
@@ -29,6 +30,7 @@ import { CreditNoteDialog, PaymentDialog, PaymentDialogData } from './pos-dialog
           @if (d.kind === 'invoice' && d.credited_total < d.total && ctx.can('pos.refund')) {
             <button type="button" class="btn-secondary" (click)="credit(d)">{{ 'pos.creditNote' | t }}</button>
           }
+          <button type="button" class="btn-secondary" [disabled]="sending()" (click)="whatsApp(d)" [title]="'share.whatsAppHint' | t"><svg lucideIcon="message-circle" [size]="16"></svg>{{ 'share.whatsApp' | t }}</button>
           <button type="button" class="btn-secondary" (click)="print()"><svg lucideIcon="printer" [size]="16"></svg>{{ 'pos.print' | t }}</button>
         </div>
       }
@@ -142,6 +144,7 @@ export class InvoicePage {
 
   protected readonly doc = signal<InvoiceDoc | null>(null);
   protected readonly loading = signal(true);
+  protected readonly sending = signal(false);
 
   constructor() {
     effect(() => {
@@ -174,6 +177,19 @@ export class InvoicePage {
   protected titleAr(d: InvoiceDoc): string {
     if (d.kind === 'credit_note') return 'إشعار دائن';
     return d.vat_registered ? 'فاتورة ضريبية' : 'فاتورة';
+  }
+
+  /** Opens WhatsApp with the invoice message and link, addressed to the customer. */
+  protected async whatsApp(d: InvoiceDoc): Promise<void> {
+    this.sending.set(true);
+    try {
+      const info = await openWhatsApp(() => this.pos.share(d.id));
+      if (!info.mobile) this.toast.info(this.i18n.t('share.noNumber'));
+    } catch (err) {
+      this.toast.error(err);
+    } finally {
+      this.sending.set(false);
+    }
   }
 
   /** Prints with the salon's receipt template (Settings → Invoice template). */

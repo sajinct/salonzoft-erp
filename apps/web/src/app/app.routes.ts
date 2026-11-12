@@ -36,6 +36,7 @@ export const routes: Routes = [
   // ---- Public online booking (no login; only the public_* RPCs are callable) -----
   { path: 'book/manage/:token', loadComponent: () => import('./features/booking/manage-booking.page').then((m) => m.ManageBookingPage) },
   { path: 'book/:slug', loadComponent: () => import('./features/booking/book.page').then((m) => m.BookPage) },
+  { path: 'i/:token', loadComponent: () => import('./features/pos/public-invoice.page').then((m) => m.PublicInvoicePage) },
   { path: 'feedback/:token', loadComponent: () => import('./features/marketing/public-pages').then((m) => m.FeedbackPage) },
   { path: 'unsubscribe/:token', loadComponent: () => import('./features/marketing/public-pages').then((m) => m.UnsubscribePage) },
 

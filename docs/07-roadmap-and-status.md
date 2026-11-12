@@ -183,6 +183,14 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Not covered**: shifts, leave, colours and the link to a login are not in the file.
 * **Tests**: `21_import_employees` (database), `employees-io.spec.ts`.
 
+## Send invoices and appointment details by WhatsApp (2026-11-12)
+
+* **How**: click-to-chat. The app opens WhatsApp Web (or the phone app) with the customer's number and a ready message; staff press send. Nothing is sent by the server and no WhatsApp provider is needed.
+* **Migration `0023_whatsapp_share`**: `get_appointment_share(appointment)` (wording from the salon's "booking confirmed" / "cancelled" WhatsApp template, customer language, manage link — front-desk appointments get their link on first share), `get_invoice_share(invoice)` (amount, balance, private link; links live in `invoice_share_links` because posted invoices are immutable) and `public_get_invoice(token)` (anon; the document only).
+* **Frontend**: *WhatsApp* button on the invoice page, *Send details on WhatsApp* in the appointment dialog, and the public invoice page `/i/:token` (receipt layout on phones, A4 on wide screens, print / save as PDF).
+* **Not covered**: attaching the invoice as a PDF file (WhatsApp links carry text only — the customer opens the link), automatic sending, delivery status.
+* **Tests**: `22_whatsapp_share` (database), `whatsapp.spec.ts`.
+
 ## Phase 6, part 2 report: reports & exports (2026-11-09)
 
 * **Migration `0018_reports`**: `run_report` with nine reports (daily sales, VAT summary, invoice register, payments, services, staff performance, retail products, appointments, top customers), permission- and branch-scoped, credit notes subtracted; audited exports.
