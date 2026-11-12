@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Tables, TablesInsert } from '../../../core/supabase/database.types';
 import { unwrap } from '../../../core/supabase/app-error';
 import { SUPABASE } from '../../../core/supabase/supabase.client';
+import type { ServiceImportResult, ServiceImportRow } from './services-io';
 
 export type ServiceCategory = Tables<'service_categories'>;
 export type Service = Tables<'services'>;
@@ -49,6 +50,12 @@ export class ServicesService {
 
   async updateService(id: string, input: Partial<ServiceInput>): Promise<Service> {
     return unwrap(await this.sb.from('services').update(input).eq('id', id).select('*').single());
+  }
+
+  /** Add or update services from an imported file; a dry run only validates. */
+  async import(tenantId: string, rows: ServiceImportRow[], dryRun: boolean): Promise<ServiceImportResult> {
+    const result = unwrap(await this.sb.rpc('import_services', { p_tenant: tenantId, p_rows: rows as unknown as never, p_dry_run: dryRun }));
+    return result as unknown as ServiceImportResult;
   }
 
   /** Replace the branch overrides of a service (only branches the user can access). */

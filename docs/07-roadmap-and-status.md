@@ -169,6 +169,13 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **No print dialog**: browsers only skip it when started with `--kiosk-printing` (Chrome / Edge); the settings page shows the shortcut to create on the cashier PC. Raw ESC/POS printing (cash-drawer kick, cutter control) is not built.
 * **Tests**: `19_receipt_template` (database), `receipt.spec.ts` (renderer).
 
+## Service catalogue import / export (2026-11-12)
+
+* **Migration `0021_import_services`**: `import_services(tenant, rows, dry_run)` — adds services or updates them (matched by code, else by English name), creates missing categories, reports bad rows by line, dry run saves nothing. `services.manage`, SECURITY INVOKER, at most 1000 rows.
+* **Frontend**: Services → *Import* (Excel `.xlsx` or CSV, check then import, example file) and *Export Excel* / *CSV*. The export uses the same columns the import reads, so a file can be exported, edited and imported back. Excel support comes from `read-excel-file` / `write-excel-file`, loaded only when used.
+* **Not covered**: branch price overrides, colours and consumables are not in the file.
+* **Tests**: `20_import_services` (database), `services-io.spec.ts`.
+
 ## Phase 6, part 2 report: reports & exports (2026-11-09)
 
 * **Migration `0018_reports`**: `run_report` with nine reports (daily sales, VAT summary, invoice register, payments, services, staff performance, retail products, appointments, top customers), permission- and branch-scoped, credit notes subtracted; audited exports.

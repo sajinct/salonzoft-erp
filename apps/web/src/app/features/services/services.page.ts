@@ -8,7 +8,9 @@ import { TenantContextService } from '../../core/tenant/tenant-context.service';
 import { ConfirmService, PageHeader, StatePanel } from '../../shared/components/ui';
 import { MoneyPipe } from '../../shared/pipes/format.pipes';
 import { InventoryService, Product } from '../inventory/data/inventory.service';
+import { downloadCsv, downloadXlsx, servicesToTable } from './data/services-io';
 import { BranchPriceInput, Service, ServiceCategory, ServiceInput, ServicePrice, ServicesService } from './data/services.service';
+import { ServicesImportDialog } from './services-import.dialog';
 
 const MONEY = /^\d{1,9}(\.\d{1,3})?$/;
 
@@ -372,7 +374,12 @@ export class ServiceDialog {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <sz-page-header [heading]="'nav.services' | t" [subtitle]="'services.subtitle' | t">
+      @if (services().length > 0) {
+        <button type="button" class="btn-secondary" (click)="export('xlsx')" [title]="'services.exportHint' | t"><svg lucideIcon="download" [size]="16"></svg>{{ 'services.exportExcel' | t }}</button>
+        <button type="button" class="btn-secondary" (click)="export('csv')" [title]="'services.exportHint' | t"><svg lucideIcon="download" [size]="16"></svg>CSV</button>
+      }
       @if (canManage()) {
+        <button type="button" class="btn-secondary" (click)="openImport()"><svg lucideIcon="upload" [size]="16"></svg>{{ 'services.import' | t }}</button>
         <button type="button" class="btn-secondary" (click)="openCategory(null)"><svg lucideIcon="folder-plus" [size]="16"></svg>{{ 'services.addCategory' | t }}</button>
         <button type="button" class="btn-primary" (click)="openService(null)"><svg lucideIcon="plus" [size]="16"></svg>{{ 'services.add' | t }}</button>
       }
@@ -512,6 +519,24 @@ export class ServicesPage implements OnInit {
 
   protected hasOverrides(serviceId: string): boolean {
     return this.prices().some((p) => p.service_id === serviceId);
+  }
+
+  /** The whole catalogue (not only the filtered list), in the layout the import reads back. */
+  protected async export(kind: 'csv' | 'xlsx'): Promise<void> {
+    const table = servicesToTable(this.services(), this.categories());
+    const name = `services-${new Date().toISOString().slice(0, 10)}`;
+    try {
+      if (kind === 'csv') downloadCsv(table, `${name}.csv`);
+      else await downloadXlsx(table, `${name}.xlsx`);
+    } catch (err) {
+      this.toast.error(err);
+    }
+  }
+
+  openImport(): void {
+    this.dialog.open<boolean>(ServicesImportDialog, { disableClose: true }).closed.subscribe((imported) => {
+      if (imported) void this.load();
+    });
   }
 
   openCategory(category: ServiceCategory | null): void {
