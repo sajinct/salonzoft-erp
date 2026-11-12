@@ -1,15 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideDynamicIcon } from '@lucide/angular';
+import { AuthService } from '../../core/auth/auth.service';
 import { I18nService, TranslateDynamicPipe, TranslatePipe } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../core/services/toast.service';
-import { StatePanel } from '../../shared/components/ui';
+import { ConfirmService, StatePanel } from '../../shared/components/ui';
 import { LocalDatePipe, MoneyPipe } from '../../shared/pipes/format.pipes';
 import { Cycle, SubscriptionInvoice } from '../billing/data/billing.service';
-import { AdminPlan, AdminService, TenantDetail } from './data/admin.service';
+import { AdminPlan, AdminService, TenantDetail, TenantMember, TenantPatch } from './data/admin.service';
 import { FormDialogService } from './form-dialog';
 import { InvoiceActions } from './invoice-actions';
-import { tenantBadge } from './tenants.page';
+import { MemberDialogs } from './member-dialogs';
+import { BUSINESS_TYPES, tenantBadge } from './tenants.page';
 
 type ModuleState = 'plan' | 'on' | 'off';
 
@@ -25,10 +27,11 @@ type ModuleState = 'plan' | 'on' | 'off';
       <header class="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 class="page-title flex flex-wrap items-center gap-2">{{ i18n.pick(d.tenant.name, d.tenant.name_ar) }} <span [class]="badge().cls">{{ badge().key | tx }}</span></h1>
-          <p class="text-sm text-muted"><span dir="ltr">/{{ d.tenant.slug }}</span> · {{ 'businessType.' + d.tenant.business_type | tx }} · {{ 'admin.since' | t: { date: (d.tenant.created_at | localDate) } }}</p>
+          <p class="text-sm text-muted"><span dir="ltr">/{{ d.tenant.slug }}</span> · {{ 'businessType.' + d.tenant.business_type | tx }} · {{ 'admin.since' | t: { date: (d.tenant.created_at | localDate) } }}@if (d.tenant.legal_name) { · {{ d.tenant.legal_name }} }</p>
         </div>
         <div class="flex flex-wrap gap-2">
           @if (api.canSupport()) {
+            <button type="button" class="btn-secondary" (click)="editBusiness()"><svg lucideIcon="pencil" [size]="16"></svg>{{ 'admin.editBusiness' | t }}</button>
             @if (d.tenant.status === 'active') {
               <button type="button" class="btn-secondary" (click)="setStatus('suspended')"><svg lucideIcon="lock" [size]="16"></svg>{{ 'admin.suspend' | t }}</button>
             } @else {
@@ -97,22 +100,55 @@ type ModuleState = 'plan' | 'on' | 'off';
             </tbody>
           </table>
         </section>
-
-        <section class="card p-5">
-          <h2 class="mb-3 font-semibold">{{ 'admin.members' | t }}</h2>
-          <ul class="divide-y divide-line text-sm">
-            @for (m of d.members; track m.email) {
-              <li class="flex items-center justify-between gap-3 py-2">
-                <div class="min-w-0"><p class="truncate font-medium">{{ m.full_name || m.email }}</p><p class="truncate text-xs text-muted" dir="ltr">{{ m.email }}</p></div>
-                <div class="flex shrink-0 gap-1">
-                  @if (m.is_owner) { <span class="badge-primary">{{ 'admin.ownerBadge' | t }}</span> }
-                  @if (m.status !== 'active') { <span class="badge-muted">{{ m.status }}</span> }
-                </div>
-              </li>
-            }
-          </ul>
-        </section>
       </div>
+
+      <section class="card mt-5 overflow-x-auto">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-5 pt-5">
+          <h2 class="font-semibold">{{ 'admin.users' | t }}</h2>
+          @if (api.canSupport()) { <button type="button" class="btn-secondary btn-sm" (click)="addUser()"><svg lucideIcon="user-plus" [size]="15"></svg>{{ 'admin.addUser' | t }}</button> }
+        </div>
+        @if (!hasOwner()) { <p class="px-5 pt-2 text-sm text-danger">{{ 'admin.noOwner' | t }}</p> }
+        <table class="table mt-2">
+          <thead><tr><th>{{ 'team.member' | t }}</th><th>{{ 'team.roles' | t }}</th><th>{{ 'team.branches' | t }}</th><th>{{ 'common.status' | t }}</th><th></th></tr></thead>
+          <tbody>
+            @for (m of d.members; track m.membership_id) {
+              <tr>
+                <td>
+                  <p class="font-medium">{{ m.full_name || m.email }}</p>
+                  <p class="text-xs text-muted" dir="ltr">{{ m.email }}</p>
+                  @if (m.job_title) { <p class="text-xs text-muted">{{ m.job_title }}</p> }
+                </td>
+                <td>
+                  @if (m.is_owner) { <span class="badge-primary">{{ 'admin.ownerBadge' | t }}</span> } @else {
+                    <div class="flex flex-wrap gap-1">@for (rid of m.role_ids; track rid) { <span class="badge-muted">{{ roleName(rid) }}</span> } @empty { <span class="text-xs text-muted">—</span> }</div>
+                  }
+                </td>
+                <td class="text-sm">{{ m.is_owner || m.all_branches ? ('shell.allBranches' | t) : branchNames(m.branch_ids) }}</td>
+                <td><span [class]="m.status === 'active' ? 'badge-success' : 'badge-warning'">{{ (m.status === 'active' ? 'common.active' : 'team.suspended') | t }}</span></td>
+                <td class="whitespace-nowrap text-end">
+                  @if (api.canSupport()) {
+                    @if (!m.is_owner) {
+                      <button type="button" class="btn-ghost btn-sm" (click)="editUser(m)">{{ 'team.editAccess' | t }}</button>
+                      <button type="button" class="btn-ghost btn-sm" (click)="toggleUser(m)">{{ (m.status === 'active' ? 'team.suspend' : 'team.reactivate') | t }}</button>
+                      @if (api.isAdmin() && m.status === 'active') { <button type="button" class="btn-ghost btn-sm" (click)="makeOwner(m)">{{ 'admin.makeOwner' | t }}</button> }
+                    }
+                    <button type="button" class="btn-icon" (click)="resetPassword(m)" [attr.aria-label]="'admin.resetPassword' | t" [title]="'admin.resetPassword' | t"><svg lucideIcon="key-round" [size]="16"></svg></button>
+                  }
+                </td>
+              </tr>
+            } @empty { <tr><td colspan="5" class="py-6 text-center text-muted">{{ 'admin.none' | t }}</td></tr> }
+            @for (inv of d.invitations; track inv.id) {
+              <tr>
+                <td><p class="flex items-center gap-2" dir="ltr"><svg lucideIcon="mail" [size]="15" class="text-muted"></svg>{{ inv.email }}</p></td>
+                <td>@if (inv.make_owner) { <span class="badge-primary">{{ 'admin.ownerInvite' | t }}</span> }</td>
+                <td class="text-xs text-muted">{{ 'team.expires' | t: { date: (inv.expires_at | localDate) } }}</td>
+                <td><span class="badge-muted">{{ 'admin.invited' | t }}</span></td>
+                <td class="text-end">@if (api.canSupport()) { <button type="button" class="btn-ghost btn-sm text-danger" (click)="revokeInvite(inv.id)">{{ 'team.revoke' | t }}</button> }</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
 
       <section class="card mt-5 overflow-x-auto">
         <h2 class="px-5 pt-5 font-semibold">{{ 'billing.invoices' | t }}</h2>
@@ -158,6 +194,9 @@ export class AdminTenantPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly form = inject(FormDialogService);
   private readonly invoices = inject(InvoiceActions);
+  private readonly members = inject(MemberDialogs);
+  private readonly confirm = inject(ConfirmService);
+  private readonly auth = inject(AuthService);
 
   protected readonly moduleStates: ModuleState[] = ['plan', 'on', 'off'];
   protected readonly loading = signal(true);
@@ -168,6 +207,7 @@ export class AdminTenantPage implements OnInit {
     const d = this.d();
     return tenantBadge(d?.tenant.status ?? 'active', d?.subscription?.status ?? null, d?.subscription?.trial_ends_at ?? null);
   });
+  protected readonly hasOwner = computed(() => (this.d()?.members ?? []).some((m) => m.is_owner));
   protected readonly paidModules = computed(() => (this.d()?.modules ?? []).filter((m) => !m.is_core));
   protected readonly usage = computed(() => {
     const u = this.d()?.usage;
@@ -239,6 +279,115 @@ export class AdminTenantPage implements OnInit {
     });
     if (!values) return;
     await this.run(() => this.api.setTenantStatus(this.id(), status, values['reason'].trim() || null), t('common.saved'));
+  }
+
+  protected roleName(id: string): string {
+    const r = this.d()?.roles.find((x) => x.id === id);
+    return r ? this.i18n.pick(r.name_en, r.name_ar) : '…';
+  }
+
+  protected branchNames(ids: string[]): string {
+    const branches = this.d()?.branches ?? [];
+    return branches.filter((b) => ids.includes(b.id)).map((b) => this.i18n.pick(b.name_en, b.name_ar)).join(', ') || '—';
+  }
+
+  private businessName(): string {
+    const t = this.d()?.tenant;
+    return t ? this.i18n.pick(t.name, t.name_ar) : '';
+  }
+
+  async editBusiness(): Promise<void> {
+    const t = this.i18n.t.bind(this.i18n);
+    const cur = this.d()?.tenant;
+    if (!cur) return;
+    const values = await this.form.open({
+      title: t('admin.editBusiness'),
+      submitLabel: t('common.save'),
+      fields: [
+        { key: 'name', label: t('onboarding.businessName'), type: 'text', value: cur.name, required: true },
+        { key: 'name_ar', label: t('admin.nameAr'), type: 'text', value: cur.name_ar ?? '' },
+        { key: 'legal_name', label: t('admin.legalName'), type: 'text', value: cur.legal_name ?? '' },
+        { key: 'business_type', label: t('onboarding.businessType'), type: 'select', value: cur.business_type, options: BUSINESS_TYPES.map((b) => ({ value: b, label: this.i18n.tx('businessType.' + b) })) },
+        { key: 'slug', label: t('onboarding.slug'), type: 'text', value: cur.slug, required: true, hint: t('admin.slugChangeHint') },
+      ],
+    });
+    if (!values) return;
+    // Send only what changed, so an untouched booking address is never rewritten.
+    const before: Record<string, string> = { name: cur.name, name_ar: cur.name_ar ?? '', legal_name: cur.legal_name ?? '', business_type: cur.business_type, slug: cur.slug };
+    const patch: TenantPatch = {};
+    for (const key of ['name', 'name_ar', 'legal_name', 'business_type', 'slug'] as const) {
+      const value = key === 'slug' ? values[key].trim().toLowerCase() : values[key].trim();
+      if (value !== before[key]) patch[key] = value;
+    }
+    if (!Object.keys(patch).length) return;
+    await this.run(() => this.api.updateTenant(this.id(), patch), t('common.saved'));
+  }
+
+  async addUser(): Promise<void> {
+    const d = this.d();
+    if (!d) return;
+    const r = await this.members.access({ roles: d.roles, branches: d.branches, member: null, canOwner: this.api.isAdmin() && !this.hasOwner() });
+    if (!r) return;
+    try {
+      const res = await this.api.addMember(this.id(), r.email, r.access, r.owner);
+      if (res.invitation) await this.members.showInvitation(res.invitation, this.businessName());
+      else this.toast.success(this.i18n.t('admin.userAdded', { email: res.email }));
+      await this.load();
+    } catch (err) {
+      this.toast.error(err);
+    }
+  }
+
+  async editUser(m: TenantMember): Promise<void> {
+    const d = this.d();
+    if (!d) return;
+    const r = await this.members.access({ roles: d.roles, branches: d.branches, member: m, canOwner: false });
+    if (!r) return;
+    await this.run(() => this.api.updateMember(m.membership_id, r.access), this.i18n.t('common.saved'));
+  }
+
+  async toggleUser(m: TenantMember): Promise<void> {
+    const suspend = m.status === 'active';
+    if (suspend) {
+      const ok = await this.confirm.ask({
+        title: this.i18n.t('team.suspend'),
+        message: this.i18n.t('team.confirmSuspend', { name: m.full_name || m.email }),
+        confirmLabel: this.i18n.t('team.suspend'),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    await this.run(() => this.api.setMemberStatus(m.membership_id, suspend ? 'suspended' : 'active'));
+  }
+
+  async makeOwner(m: TenantMember): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: this.i18n.t('admin.makeOwner'),
+      message: this.i18n.t('admin.makeOwnerLine', { name: m.full_name || m.email }),
+      confirmLabel: this.i18n.t('admin.makeOwner'),
+      danger: true,
+    });
+    if (!ok) return;
+    await this.run(() => this.api.transferOwnership(this.id(), m.membership_id), this.i18n.t('common.saved'));
+  }
+
+  async resetPassword(m: TenantMember): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: this.i18n.t('admin.resetPassword'),
+      message: this.i18n.t('admin.resetPasswordLine', { email: m.email }),
+      confirmLabel: this.i18n.t('admin.resetPassword'),
+    });
+    if (!ok) return;
+    try {
+      await this.auth.sendPasswordReset(m.email);
+      this.toast.success(this.i18n.t('admin.resetSent'));
+    } catch (err) {
+      this.toast.error(err);
+    }
+  }
+
+  async revokeInvite(invitationId: string): Promise<void> {
+    await this.run(() => this.api.revokeInvitation(invitationId));
   }
 
   async extendTrial(): Promise<void> {

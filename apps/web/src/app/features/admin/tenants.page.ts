@@ -6,6 +6,15 @@ import { ToastService } from '../../core/services/toast.service';
 import { PageHeader, StatePanel } from '../../shared/components/ui';
 import { LocalDatePipe, MoneyPipe } from '../../shared/pipes/format.pipes';
 import { AdminService, TenantFilter, TenantRow } from './data/admin.service';
+import { FormDialogService } from './form-dialog';
+import { MemberDialogs } from './member-dialogs';
+
+export const BUSINESS_TYPES = ['barbershop', 'beauty_salon', 'unisex_salon', 'nail_studio', 'makeup_studio', 'spa', 'multi_concept'] as const;
+
+/** Booking address suggested from a (Latin) business name. */
+export function slugify(name: string): string {
+  return name.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/, '');
+}
 
 const PAGE = 50;
 
@@ -22,7 +31,11 @@ export function tenantBadge(status: string, subStatus: string | null, trialEnd: 
   imports: [TranslatePipe, TranslateDynamicPipe, LucideDynamicIcon, PageHeader, StatePanel, LocalDatePipe, MoneyPipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <sz-page-header [heading]="'admin.nav.tenants' | t" [subtitle]="'admin.tenantsCount' | t: { n: total() }" />
+    <sz-page-header [heading]="'admin.nav.tenants' | t" [subtitle]="'admin.tenantsCount' | t: { n: total() }">
+      @if (api.canSupport()) {
+        <button type="button" class="btn-primary" (click)="addBusiness()"><svg lucideIcon="plus" [size]="16"></svg>{{ 'admin.addBusiness' | t }}</button>
+      }
+    </sz-page-header>
     <div class="mb-4 flex flex-wrap gap-2">
       <label class="relative min-w-60 flex-1">
         <svg lucideIcon="search" [size]="16" class="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted"></svg>
@@ -73,9 +86,11 @@ export class AdminTenantsPage implements OnInit {
   /** ?filter= from the overview cards. */
   readonly filter = input<string>();
   protected readonly i18n = inject(I18nService);
-  private readonly api = inject(AdminService);
+  protected readonly api = inject(AdminService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly form = inject(FormDialogService);
+  private readonly members = inject(MemberDialogs);
 
   protected readonly PAGE = PAGE;
   protected readonly filters: TenantFilter[] = ['all', 'trialing', 'expired', 'active', 'past_due', 'suspended', 'cancelled', 'tenant_suspended', 'closed'];
@@ -123,6 +138,40 @@ export class AdminTenantsPage implements OnInit {
 
   protected open(r: TenantRow): void {
     void this.router.navigate(['/admin/tenants', r.id]);
+  }
+
+  async addBusiness(): Promise<void> {
+    const t = this.i18n.t.bind(this.i18n);
+    try {
+      const plans = (await this.api.plans()).filter((p) => p.is_active);
+      const values = await this.form.open({
+        title: t('admin.addBusiness'),
+        message: t('admin.addBusinessLine'),
+        submitLabel: t('admin.addBusiness'),
+        fields: [
+          { key: 'name', label: t('onboarding.businessName'), type: 'text', required: true },
+          { key: 'slug', label: t('onboarding.slug'), type: 'text', hint: t('admin.slugOptionalHint') },
+          { key: 'email', label: t('admin.ownerEmail'), type: 'email', required: true },
+          { key: 'type', label: t('onboarding.businessType'), type: 'select', value: 'unisex_salon', options: BUSINESS_TYPES.map((b) => ({ value: b, label: this.i18n.tx('businessType.' + b) })) },
+          { key: 'language', label: t('onboarding.language'), type: 'select', value: 'en', options: [{ value: 'en', label: 'English' }, { value: 'ar', label: 'العربية' }] },
+          {
+            key: 'plan', label: t('billing.plan'), type: 'select', value: plans.some((p) => p.code === 'professional') ? 'professional' : plans[0]?.code,
+            options: plans.map((p) => ({ value: p.code, label: this.i18n.pick(p.name_en, p.name_ar) + ' · ' + t('admin.trialDaysN', { n: p.trial_days }) })),
+          },
+        ],
+      });
+      if (!values) return;
+      const name = values['name'].trim();
+      const r = await this.api.createTenant({
+        name, slug: values['slug'].trim().toLowerCase() || slugify(name), ownerEmail: values['email'].trim().toLowerCase(),
+        businessType: values['type'], language: values['language'], planCode: values['plan'],
+      });
+      this.toast.success(t('admin.businessCreated'));
+      if (r.invitation) await this.members.showInvitation(r.invitation, name);
+      void this.router.navigate(['/admin/tenants', r.tenant_id]);
+    } catch (err) {
+      this.toast.error(err);
+    }
   }
 
   private async load(): Promise<void> {

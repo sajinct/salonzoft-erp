@@ -3751,6 +3751,7 @@ export type Database = {
           expires_at: string
           id: string
           invited_by: string | null
+          make_owner: boolean
           role_ids: string[]
           status: string
           tenant_id: string
@@ -3767,6 +3768,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string | null
+          make_owner?: boolean
           role_ids?: string[]
           status?: string
           tenant_id: string
@@ -3783,6 +3785,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string | null
+          make_owner?: boolean
           role_ids?: string[]
           status?: string
           tenant_id?: string
@@ -4261,6 +4264,18 @@ export type Database = {
         }
         Returns: number
       }
+      admin_add_member: {
+        Args: {
+          p_tenant: string
+          p_email: string
+          p_role_ids?: string[]
+          p_all_branches?: boolean
+          p_branch_ids?: string[]
+          p_job_title?: string
+          p_owner?: boolean
+        }
+        Returns: Json
+      }
       admin_assign_plan: {
         Args: {
           p_tenant: string
@@ -4276,6 +4291,18 @@ export type Database = {
           p_plan_code: string
           p_cycle: string
           p_kind?: string
+        }
+        Returns: Json
+      }
+      admin_create_tenant: {
+        Args: {
+          p_name: string
+          p_slug: string
+          p_owner_email: string
+          p_business_type?: string
+          p_default_language?: string
+          p_plan_code?: string
+          p_branch_name?: string
         }
         Returns: Json
       }
@@ -4335,6 +4362,12 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_revoke_invitation: {
+        Args: {
+          p_invitation_id: string
+        }
+        Returns: undefined
+      }
       admin_save_plan: {
         Args: {
           p_plan: Json
@@ -4354,6 +4387,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_set_member_status: {
+        Args: {
+          p_membership_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
       admin_set_module: {
         Args: {
           p_tenant: string
@@ -4368,6 +4408,30 @@ export type Database = {
           p_tenant: string
           p_status: string
           p_reason?: string
+        }
+        Returns: undefined
+      }
+      admin_transfer_ownership: {
+        Args: {
+          p_tenant: string
+          p_membership_id: string
+        }
+        Returns: undefined
+      }
+      admin_update_member: {
+        Args: {
+          p_membership_id: string
+          p_role_ids: string[]
+          p_all_branches: boolean
+          p_branch_ids: string[]
+          p_job_title?: string
+        }
+        Returns: undefined
+      }
+      admin_update_tenant: {
+        Args: {
+          p_tenant: string
+          p_patch: Json
         }
         Returns: undefined
       }

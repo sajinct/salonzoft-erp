@@ -56,7 +56,7 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 4. Overnight branch hours (e.g. 18:00–02:00) aren't supported. Ranges must end by 24:00.
 5. Arabic copy needs review by a native Omani copywriter. The 5% VAT default and VAT number format must be verified with the Oman Tax Authority.
 6. CSP in `_headers` has placeholders (Supabase host, inline-script hash) to fill per environment.
-7. Ownership transfer, tenant closure/export, and the privacy-request workflows are not built yet (Phase 6/7).
+7. Ownership transfer by the owner themselves (platform admins can transfer it from the console), tenant closure/export, and the privacy-request workflows are not built yet (Phase 6/7).
 8. Plan prices (15/35/75 OMR) are placeholders.
 
 ---
@@ -155,6 +155,12 @@ None in Phase 1. Every Phase 1 operation is a transactional RPC; see the catalog
 * **Migration `0017_platform_billing`**: subscription invoices (gap-free `SZ-YYYY-#####`, VAT from platform settings, seller/buyer snapshots, one unpaid invoice per salon); plan changes (pro-rata credited upgrades, scheduled downgrades, limits checked); billing cycle for pg_cron (renewal invoices, past-due grace, suspension, cancellation); service-role gateway entry point; super-admin RPCs with admin / billing / support roles and a platform audit log.
 * **Angular**: `/admin` console (overview, businesses, business detail, invoices, plans, settings & admins), Settings → Plan & billing, printable subscription invoice, overdue banner, admin link in the user menu. English is now lazy-loaded like Arabic (initial bundle 798 kB).
 * **Tests**: `npm run test:db` **158 / 158** (5 new); `ng test` **46 / 46**.
+
+## Super-admin: add and manage businesses and users (2026-11-12)
+
+* **Migration `0019_admin_tenant_management`**: `admin_create_tenant` (owner added directly, or by a one-time owner invitation when the e-mail has no account), `admin_update_tenant`, and user management for any business (`admin_add_member`, `admin_update_member`, `admin_set_member_status`, `admin_revoke_invitation`, `admin_transfer_ownership`). Admin + support; ownership changes are admin-only; everything lands in the platform audit log. Platform admins still have no RLS access to tenant tables.
+* **Console**: *Add business* on `/admin/tenants`; on a business page *Edit*, a Users table (add user, edit roles/branches, suspend/reactivate, make owner, send password reset) and pending invitations with revoke.
+* **Tests**: `18_admin_tenant_management`.
 
 ## Phase 6, part 2 report: reports & exports (2026-11-09)
 

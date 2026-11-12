@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { unwrap } from '../../../core/supabase/app-error';
 import { SUPABASE } from '../../../core/supabase/supabase.client';
+import { environment } from '../../../../environments/environment';
 import { Cycle, SubscriptionInvoice } from '../../billing/data/billing.service';
 
 export type AdminRole = 'admin' | 'billing' | 'support';
@@ -61,10 +62,40 @@ export interface TenantDetail {
   } | null;
   usage: { branches: number; staff: number; members: number; customers: number; appointments_30d: number; sales_30d: number; messages_month: number; last_activity: string | null };
   modules: { code: string; name_en: string; name_ar: string; is_core: boolean; enabled: boolean; source: string | null; is_enabled: boolean | null; valid_until: string | null }[];
-  members: { email: string; full_name: string | null; is_owner: boolean; status: string; job_title: string | null }[];
+  roles: TenantRole[];
+  branches: TenantBranch[];
+  members: TenantMember[];
+  invitations: { id: string; email: string; make_owner: boolean; expires_at: string; created_at: string }[];
   invoices: SubscriptionInvoice[];
   history: { action: string; data: Record<string, unknown>; created_at: string; actor: string | null }[];
 }
+
+export interface TenantRole { id: string; code: string; name_en: string; name_ar: string | null }
+export interface TenantBranch { id: string; code: string; name_en: string; name_ar: string | null; is_main: boolean; is_active: boolean }
+export interface TenantMember {
+  membership_id: string;
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  is_owner: boolean;
+  status: 'active' | 'suspended';
+  job_title: string | null;
+  all_branches: boolean;
+  joined_at: string;
+  role_ids: string[];
+  branch_ids: string[];
+}
+
+/** One-time invitation link for a person who has no account yet. */
+export interface AdminInvitation { invitation_id: string; token: string; email: string; expires_at: string; url: string }
+
+export interface NewTenantInput { name: string; slug: string; ownerEmail: string; businessType: string; language: string; planCode: string }
+export interface MemberAccessInput { roleIds: string[]; allBranches: boolean; branchIds: string[]; jobTitle: string | null }
+export type TenantPatch = Partial<Record<'name' | 'name_ar' | 'legal_name' | 'business_type' | 'slug', string>>;
+
+type RawInvitation = Omit<AdminInvitation, 'url'> | null;
+const withUrl = (inv: RawInvitation): AdminInvitation | null =>
+  inv ? { ...inv, url: `${environment.appUrl}/accept-invite?token=${inv.token}` } : null;
 
 export type AdminInvoice = SubscriptionInvoice & { tenant_name: string; tenant_slug: string };
 
@@ -130,6 +161,46 @@ export class AdminService {
 
   tenant(id: string): Promise<TenantDetail> {
     return this.rpc('admin_get_tenant', { p_tenant: id });
+  }
+
+  /** Provision a business. The owner is added directly if the e-mail has an account, otherwise an invitation link comes back. */
+  async createTenant(input: NewTenantInput): Promise<{ tenant_id: string; slug: string; owner_added: boolean; invitation: AdminInvitation | null }> {
+    const r = await this.rpc<{ tenant_id: string; slug: string; owner_added: boolean; invitation: RawInvitation }>('admin_create_tenant', {
+      p_name: input.name, p_slug: input.slug, p_owner_email: input.ownerEmail, p_business_type: input.businessType,
+      p_default_language: input.language, p_plan_code: input.planCode,
+    });
+    return { ...r, invitation: withUrl(r.invitation) };
+  }
+
+  updateTenant(id: string, patch: TenantPatch): Promise<void> {
+    return this.rpc('admin_update_tenant', { p_tenant: id, p_patch: patch });
+  }
+
+  async addMember(id: string, email: string, access: MemberAccessInput, owner = false): Promise<{ added: boolean; email: string; invitation: AdminInvitation | null }> {
+    const r = await this.rpc<{ added: boolean; email: string; invitation: RawInvitation }>('admin_add_member', {
+      p_tenant: id, p_email: email, p_role_ids: access.roleIds, p_all_branches: access.allBranches,
+      p_branch_ids: access.allBranches ? [] : access.branchIds, p_job_title: access.jobTitle, p_owner: owner,
+    });
+    return { ...r, invitation: withUrl(r.invitation) };
+  }
+
+  updateMember(membershipId: string, access: MemberAccessInput): Promise<void> {
+    return this.rpc('admin_update_member', {
+      p_membership_id: membershipId, p_role_ids: access.roleIds, p_all_branches: access.allBranches,
+      p_branch_ids: access.allBranches ? [] : access.branchIds, p_job_title: access.jobTitle ?? '',
+    });
+  }
+
+  setMemberStatus(membershipId: string, status: 'active' | 'suspended'): Promise<void> {
+    return this.rpc('admin_set_member_status', { p_membership_id: membershipId, p_status: status });
+  }
+
+  transferOwnership(id: string, membershipId: string): Promise<void> {
+    return this.rpc('admin_transfer_ownership', { p_tenant: id, p_membership_id: membershipId });
+  }
+
+  revokeInvitation(invitationId: string): Promise<void> {
+    return this.rpc('admin_revoke_invitation', { p_invitation_id: invitationId });
   }
 
   setTenantStatus(id: string, status: string, reason: string | null): Promise<void> {
